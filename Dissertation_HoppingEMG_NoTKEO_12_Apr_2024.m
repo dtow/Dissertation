@@ -1,7 +1,7 @@
 %% SECTION 1 - Load Data Structure
 
 %Load data structure
-load( 'Dissertation (MATLAB)\Data Structure\David_DissertationEMGDataStructure_MinAdj_18Jun2024.mat');
+load( 'Post-Quals Data/Data Structure/Current Version/EMG DataStructure/David_DissertationEMGDataStructure_MinAdj_18Jun2024.mat');
 
 
 %Need to create a data structure for use in creating a dialog box stating there are no errors in
@@ -43,8 +43,9 @@ QualvsPostQualData =  {'Post_Quals'};
 %Second field = group list
 GroupList = {'ATx', 'Control'}; 
 %Third field = participant list 
-ATxParticipantList = { 'ATx07', 'ATx08', 'ATx10', 'ATx12', 'ATx17', 'ATx18', 'ATx19', 'ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34', 'ATx38', 'ATx41', 'ATx44', 'ATx50', 'ATx36', 'ATx49', 'ATx39', 'ATx74' };
-ControlParticipantList = { 'HC01', 'HC05', 'HC06', 'HC11', 'HC12', 'HC17', 'HC18', 'HC19', 'HC20', 'HC21', 'HC25', 'HC42', 'HC45', 'HC53', 'HC44', 'HC48', 'HC65' };
+ATxParticipantList = { 'ATx07', 'ATx08', 'ATx10', 'ATx12', 'ATx17', 'ATx18', 'ATx19', 'ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34', 'ATx38', 'ATx41', 'ATx44', 'ATx50', 'ATx36', 'ATx49', 'ATx39', 'ATx74', 'ATx65',...
+    'ATx14' };
+ControlParticipantList = { 'HC01', 'HC05', 'HC06', 'HC11', 'HC12', 'HC17', 'HC18', 'HC19', 'HC20', 'HC21', 'HC25', 'HC42', 'HC45', 'HC44', 'HC48', 'HC65' };
 %4th field = data type
 DataCategories = {'HoppingEMG'};
 %5th field = limb ID
@@ -55,13 +56,8 @@ HoppingTrialNumber = {'Trial1'};
 %Create string with degree symbol for plotting ankle angle
 string_Angle = sprintf('Angle (%c) [- = PF]',char(176));
 
-%Create vector of participant masses
-ATxParticipantMass = [ 69.90, 64.66, 107.47, 84.35, 83.07, 68.80, 84.39, 81.96, 90.30, 79.08, 79.67, 87.51, 58.12, 61.82, 90.18, 80.99, 67.28, 70.30, 71.72, 57.66 ]; 
-%ATx07, ATx08, ATx10, ATx12, ATx17, ATx18, ATx19, ATx21, ATx24, ATx25, ATx27, ATx34, ATx38, ATx41, ATx44,
-%ATx50, ATx36, ATx39, ATx74
-ControlParticipantMass = [ 57.24, 83.50, 61.37, 105.01, 61.66, 77.14, 82.00, 75.66, 79.75, 68.08, 75.28, 65.44, 82.52, 50.40, 60.45, 91.25, 60.39 ];  
-%HC01, HC05, HC06, HC08, HC11, HC12, HC17, HC18, HC19, HC20, HC21, HC25, HC42, HC45, 'HC53', HC44, HC48,
-%HC65
+%Load the Mass data from the data structure
+MassLog = David_DissertationDataStructure.Post_Quals.AllGroups.MassLog;
 
 
 %String for labeling y-axis of non-normalized EMG
@@ -74,32 +70,14 @@ EMGSampHz = 1500;
 MoCapSampHz = 250;
 
 
-   %Set vectors containing between-limb difference in tendon thickness for each participant
-    %ATx Group - %ATx07, ATx08, ATx10, ATx12, ATx17, ATx18, ATx19, ATx21, ATx24, ATx25, ATx27, ATx34,
-    %ATx38, ATx41, ATx44, ATx50, ATx36, ATx49, ATx39, ATx74
-ATxMorphology = [ 0.75, 2.41, 1.4, 0.5, 1.57, 3.69, 2.58, 1.21, 1.94, 1.84, 2.84, 1.9, 0.43,  1.4, 3.18, 0.94, 1.09, 0.82, 1.52, 1.5  ];
-    %Control Group - HC01, HC05, HC06, HC08, HC11, HC12, HC17, HC18, HC19, HC20, HC21, HC25, HC42, HC45,
-    %HC53, HC44, HC48, HC65
-ControlMorphology = [ 0.55, 0.55, 0.35, 0.55, 0.63, 0.55, 0.55, 0.62, 0.55, 0.55, 0.55, 0.55, 0.5, 0.4, 0.7, 0.55, 0.3, 0.2 ];
+   
 
+%Load the Morphology data from the data structure
+MorphologyLog = David_DissertationDataStructure.Post_Quals.AllGroups.MorphologyLog;
 
+%Load the VAS data from the data structure
+VASLog = David_DissertationDataStructure.Post_Quals.ATx.AllParticipants.VASLog;
 
-%Set vectors containing visual analog scale rating after each hopping bout, for each participant
-    %ATx Group
-        %Involved Limb
-            %Preferred Hz
-ATxVAS_Involved_PreferredHz = [ 0, 2, 0, 0, 4, 1, 2.5, 0, 0, 0, 3, 3, 0, 0, 1.5, 0, 0, 0, 2.5, 0 ];
-            %2.0 Hz
-ATxVAS_Involved_TwoHz = [ 0, 1, 0, 6.5, 4, 1, 3, 0, 0, 0, 1, 1, 0, 0, 1.5, 0, 0, 0, 1, 0 ];
-            %2.3 Hz
-ATxVAS_Involved_TwoPoint3Hz = [ 0, 0, 0, 6, 3, 1, 3, 0, 0, 0, 0, 2, 0, 0, 1.5, 0, 0, 0, 1, 0 ];
-        %Non-Involved Limb
-            %Preferred Hz
-ATxVAS_NonInvolved_PreferredHz = [ 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, 0, 0 ];
-            %2.0 Hz
-ATxVAS_NonInvolved_TwoHz = [ 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0 ];
-            %2.3 hz
-ATxVAS_NonInvolved_TwoPoint3Hz = [ 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0 ];
     %Control Group
 ControlVAS = 0;
 
@@ -116,9 +94,6 @@ else
     msgbox(['\fontsize{15}' error.message 'Line ' num2str(error.stack.line) ]',CreateStruct);
     
 end
-
-
-
 
 
 
@@ -225,7 +200,7 @@ for l = 1 : numel(QualvsPostQualData)
 
 %% !! Begin M For Loop - Loop Through Groups    
     
-    for m = 2% : numel(GroupList)
+    for m = 1% : numel(GroupList)
         
 
         %If Group being processed is ATx, set Participant List to contain list of ATx participants.
@@ -234,8 +209,6 @@ for l = 1 : numel(QualvsPostQualData)
         if strcmp( GroupList{m}, 'ATx' )
             
             ParticipantList = ATxParticipantList;
-            
-            ParticipantMass = ATxParticipantMass;
 
             LimbID = {'InvolvedLimb','NonInvolvedLimb'};
 
@@ -243,8 +216,6 @@ for l = 1 : numel(QualvsPostQualData)
         else
             
             ParticipantList = ControlParticipantList;
-            
-            ParticipantMass = ControlParticipantMass;
             
             LimbID = {'LeftLimb','RightLimb'};
 
@@ -260,7 +231,7 @@ for l = 1 : numel(QualvsPostQualData)
         
 %% !! Begin N For Loop - Loop Through Participants        
         
-        for n = 5 %numel(ParticipantList)
+        for n = 13 %numel(ParticipantList)
             
             
             %If you are NOT reprocessing data, ask whether we have added any new participants
@@ -323,12 +294,12 @@ for l = 1 : numel(QualvsPostQualData)
                 
                 %These are numeric values of the hopping rates, for filling in the matrices
                 %containing data from all participants. Here, 0 = preferred Hz
-                HoppingRate_ID_forTable = [ 0, 2, 2.3 ];
+                HoppingRate_ID_forTable = [ 0, 2, 2.33 ];
                 
                 
                 
 
-            elseif strcmp( ParticipantList{n}, 'ATx12'  ) || strcmp( ParticipantList{n}, 'ATx24'  ) 
+            elseif strcmp( ParticipantList{n}, 'ATx24'  ) 
                 
                 %LimbIDs for ATx participants
                 LimbID = {'InvolvedLimb','NonInvolvedLimb'};
@@ -343,12 +314,12 @@ for l = 1 : numel(QualvsPostQualData)
                 
                 %These are numeric values of the hopping rates, for filling in the matrices
                 %containing data from all participants. Here, 0 = preferred Hz
-                HoppingRate_ID_forTable = [ 2, 2.3 ];
+                HoppingRate_ID_forTable = [ 2, 2.33 ];
 
 
 
 
-            elseif strcmp( ParticipantList{n}, 'ATx19'  )
+            elseif strcmp( ParticipantList{n}, 'ATx19'  ) || strcmp( ParticipantList{n}, 'ATx65'  )
              
                 %LimbIDs for ATx participants
                 LimbID = {'InvolvedLimb','NonInvolvedLimb'};
@@ -363,12 +334,12 @@ for l = 1 : numel(QualvsPostQualData)
                 
                 %These are numeric values of the hopping rates, for filling in the matrices
                 %containing data from all participants. Here, 0 = preferred Hz
-                HoppingRate_ID_forTable = [ 2, 2.3 ];
+                HoppingRate_ID_forTable = [ 2, 2.33 ];
 
 
 
-            elseif strcmp( ParticipantList{n}, 'ATx27'  ) || strcmp( ParticipantList{n}, 'ATx34'  ) || strcmp( ParticipantList{n}, 'ATx44'  ) ||...
-                    strcmp( ParticipantList{n}, 'ATx50'  )
+            elseif strcmp( ParticipantList{n}, 'ATx12'  ) || strcmp( ParticipantList{n}, 'ATx14'  ) || strcmp( ParticipantList{n}, 'ATx27'  ) || strcmp( ParticipantList{n}, 'ATx34'  ) || strcmp( ParticipantList{n}, 'ATx44'  ) ||...
+                    strcmp( ParticipantList{n}, 'ATx50'  ) || strcmp( ParticipantList{n}, 'ATx100'  )
              
                 %LimbIDs for ATx participants
                 LimbID = {'InvolvedLimb','NonInvolvedLimb'};
@@ -383,13 +354,13 @@ for l = 1 : numel(QualvsPostQualData)
                 
                 %These are numeric values of the hopping rates, for filling in the matrices
                 %containing data from all participants. Here, 0 = preferred Hz
-                HoppingRate_ID_forTable = [ 0, 2, 2.3 ]; 
+                HoppingRate_ID_forTable = [ 0, 2, 2.33 ]; 
                 
                 
 
 
 
-            elseif strcmp( ParticipantList{ n }, 'HC11'  )
+            elseif strcmp( ParticipantList{ n }, 'HC11'  ) || strcmp( ParticipantList{n}, 'HC42'  )
                 
                 %Process only the right limb of HC11
                 LimbID = { 'LeftLimb', 'RightLimb' };
@@ -399,39 +370,19 @@ for l = 1 : numel(QualvsPostQualData)
                 %set it differently for HC01, the values may be wrong
                 LimbID_forV3DOutput = { 'LeftLimb', 'RightLimb' };
                 
-                %HC11 has only the 2.0 and 2.3 Hz hopping rates
+                %HC11 has only the 2.0 and 2.33 Hz hopping rates
                 HoppingRate_ID = {'TwoHz', 'TwoPoint3Hz'};
                 
                 %These are numeric values of the hopping rates, for filling in the matrices
                 %containing data from all participants. Here, 0 = preferred Hz
-                 HoppingRate_ID_forTable = [ 2, 2.3 ];
-                
-                
-
-
-
-            elseif strcmp( ParticipantList{ n }, 'HC42'  )
-                
-                %Process only the right limb of HC11
-                LimbID = { 'RightLimb', 'LeftLimb' };
-                
-                %Will use this variable to pull out the joint data from the Visual 3D output. Need
-                %to set this variable because the values may differ from the ATx group. If we don't
-                %set it differently for HC01, the values may be wrong
-                LimbID_forV3DOutput = { 'RightLimb', 'LeftLimb' };
-                
-                %HC42 has only the 2.0 and 2.3 Hz hopping rates
-                HoppingRate_ID = {'TwoHz', 'TwoPoint3Hz'};
-                
-                %These are numeric values of the hopping rates, for filling in the matrices
-                %containing data from all participants. Here, 0 = preferred Hz
-                 HoppingRate_ID_forTable = [ 2, 2.3 ];
+                 HoppingRate_ID_forTable = [ 2, 2.33 ];
                 
                 
                 
 
-            elseif strcmp( ParticipantList{ n }, 'HC11'  ) ||  strcmp( ParticipantList{ n }, 'HC17'  ) || strcmp( ParticipantList{ n }, 'HC21'  ) ||...
-                    strcmp( ParticipantList{ n }, 'HC32'  ) || strcmp( ParticipantList{ n }, 'HC34'  ) || strcmp( ParticipantList{ n }, 'HC45'  ) || strcmp( ParticipantList{ n }, 'HC48'  )
+            elseif strcmp( ParticipantList{ n }, 'HC17'  ) || strcmp( ParticipantList{ n }, 'HC21'  ) ||...
+                    strcmp( ParticipantList{ n }, 'HC32'  ) || strcmp( ParticipantList{ n }, 'HC34'  ) || strcmp( ParticipantList{ n }, 'HC45'  ) ||...
+                    strcmp( ParticipantList{ n }, 'HC48'  ) ||strcmp( ParticipantList{ n }, 'HC65'  ) || strcmp( ParticipantList{ n }, 'HC68'  )
                 
                 %LimbIDs for ATx participants
                 LimbID = {'LeftLimb', 'RightLimb'};
@@ -446,7 +397,7 @@ for l = 1 : numel(QualvsPostQualData)
                 
                 %These are numeric values of the hopping rates, for filling in the matrices
                 %containing data from all participants. Here, 0 = preferred Hz
-                HoppingRate_ID_forTable = [ 0, 2, 2.3 ];
+                HoppingRate_ID_forTable = [ 0, 2, 2.33 ];
 
 
             else
@@ -464,7 +415,7 @@ for l = 1 : numel(QualvsPostQualData)
                 
                 %These are numeric values of the hopping rates, for filling in the matrices
                 %containing data from all participants. Here, 0 = preferred Hz
-                 HoppingRate_ID_forTable = [ 0, 2, 2.3 ];
+                 HoppingRate_ID_forTable = [ 0, 2, 2.33 ];
                 
                                
             end
@@ -566,6 +517,20 @@ for l = 1 : numel(QualvsPostQualData)
                      elseif strcmp( ParticipantList{n}, 'ATx12'  ) && strcmp( LimbID{ a}, 'NonInvolvedLimb')
 
                         %Set the muscle ID list for ATx07 non-involved limb
+                         MuscleID = {'RMGas','RLGas','RSol','RPL','RTA'};
+
+
+
+                    elseif strcmp( ParticipantList{n}, 'ATx14'  ) && strcmp( LimbID{r}, 'InvolvedLimb')
+
+                         %Set the muscle ID list for ATx14 involved limb
+                        MuscleID = {'LMGas','LLGas','LSol','LPL','LTA'};
+                         
+                     %For ATx14, Non-Involved Limb is Right Limb. Tell the code that the MuscleID
+                    %should use 'L' in front of each muscle    
+                     elseif strcmp( ParticipantList{n}, 'ATx14'  ) && strcmp( LimbID{r}, 'NonInvolvedLimb')
+
+                        %Set the muscle ID list for ATx14 non-involved limb
                          MuscleID = {'RMGas','RLGas','RSol','RPL','RTA'};
                          
                          
@@ -808,6 +773,20 @@ for l = 1 : numel(QualvsPostQualData)
 
                         %Set the muscle ID list for ATx50 non-involved limb
                          MuscleID = {'RMGas','RLGas','RSol','RPL','RTA'};
+
+
+
+                    elseif strcmp( ParticipantList{n}, 'ATx65'  ) && strcmp( LimbID{ a }, 'InvolvedLimb')
+
+                         %Set the muscle ID list for ATx65 involved limb
+                         MuscleID = {'RMGas','RLGas','RSol','RPL','RTA'};
+                         
+                     %For ATx65, Non-Involved Limb is Left Limb. Tell the code that the MuscleID
+                    %should use 'L' in front of each muscle    
+                     elseif strcmp( ParticipantList{n}, 'ATx65'  ) && strcmp( LimbID{ a }, 'NonInvolvedLimb')
+
+                        %Set the muscle ID list for ATx65 non-involved limb
+                        MuscleID = {'LMGas','LLGas','LSol','LPL','LTA'};
 
 
 
@@ -3769,33 +3748,7 @@ for l = 1 : numel(QualvsPostQualData)
                                                     FrameofDecreasingAfterIncreasingActivation =...
                                                          find( DiffBetweenReferenceLineValues_Offset_FramesAfterMinDifference( FrameofIncreasingActivation : numel( DiffBetweenReferenceLineValues_Offset_FramesAfterMinDifference ) ) > 0, 1 );
                                                     
-                                                    %If the difference
-                                                    %between the reference
-                                                    %line and iEMG does not
-                                                    %start decreasing after
-                                                    %increasing,
-                                                    %FrameofDecreasingAfterIncreasingActivation
-                                                    %will be empty. In this
-                                                    %case find the frame
-                                                    %number of muscle
-                                                    %offset by adding
-                                                    %FrameofIncreasingActivation
-                                                    %to
-                                                    %FrameNumber_MinDifferencefromReferenceLine_MuscleOffset(s).
-                                                    %Otherwise, add
-                                                    %FrameofIncreasingActivation
-                                                    %AND FrameofDecreasingAfterIncreasingActivation
-                                                    %to
-                                                    %FrameNumber_MinDifferencefromReferenceLine_MuscleOffset(s).
-                                                    if ~isempty(  FrameofDecreasingAfterIncreasingActivation )
-
-                                                        FrameNumber_MinDifferencefromReferenceLine_MuscleOffset( s ) = FrameNumber_MinDifferencefromReferenceLine_MuscleOffset(s) + FrameofIncreasingActivation + FrameofDecreasingAfterIncreasingActivation;
-
-                                                    else
-
-                                                        FrameNumber_MinDifferencefromReferenceLine_MuscleOffset( s ) = FrameNumber_MinDifferencefromReferenceLine_MuscleOffset(s) + FrameofIncreasingActivation;
-
-                                                    end
+                                                    FrameNumber_MinDifferencefromReferenceLine_MuscleOffset( s ) = FrameNumber_MinDifferencefromReferenceLine_MuscleOffset(s) + FrameofIncreasingActivation + FrameofDecreasingAfterIncreasingActivation;
     
                                                 end
     
@@ -6061,71 +6014,33 @@ for l = 1 : numel(QualvsPostQualData)
                                                     PreactivationOnsetTime_Table(RowtoFill_OnsetTable, 13) = TimeofGContact_IndividualHop;
         
         
-        
-                                                   %Add between-limb tendon thickness for each participant to Column 35.
-                                                    %Add VAS Pain Rating to Column 36
-                                                    if strcmp( LimbID{ a}, 'InvolvedLimb'  ) && strcmp( HoppingRate_ID{b}, 'PreferredHz')
-                                
-                                                         %Set the between-limb morphology
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 14 )  = ATxMorphology( n );
-                                                         
-                                                         %Set theVAS rating
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 15 )  = ATxVAS_Involved_PreferredHz( n );
-                
-                
-                                                    elseif strcmp( LimbID{ a}, 'InvolvedLimb'  ) && strcmp( HoppingRate_ID{b}, 'TwoHz')
-                                
-                                                         %Set the between-limb morphology
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 14 )  = ATxMorphology( n );
-                                                         
-                                                         %Set theVAS rating
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 15 )  = ATxVAS_Involved_TwoHz( n );
-                
-                                                        
-                                                    elseif strcmp( LimbID{ a}, 'InvolvedLimb'  ) && strcmp( HoppingRate_ID{b}, 'TwoPoint3Hz')
-                                
-                                                         %Set the between-limb morphology
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 14 )  = ATxMorphology( n );
-                                                         
-                                                         %Set theVAS rating
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 15 )  = ATxVAS_Involved_TwoPoint3Hz( n );
-                
-                
-                                                    elseif strcmp( LimbID{ a}, 'NonInvolvedLimb'  ) && strcmp( HoppingRate_ID{b}, 'PreferredHz')
-                                
-                                                         %Set the between-limb morphology
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 14 )  = ATxMorphology( n );
-                                                         
-                                                         %Set theVAS rating
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 15 )  = ATxVAS_NonInvolved_PreferredHz( n );
-                
-                
-                                                    elseif strcmp( LimbID{ a}, 'NonInvolvedLimb'  ) && strcmp( HoppingRate_ID{b}, 'TwoHz')
-                                
-                                                         %Set the between-limb morphology
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 14 )  = ATxMorphology( n );
-                                                         
-                                                         %Set theVAS rating
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 15 )  = ATxVAS_NonInvolved_TwoHz( n );
-                
-                                                        
-                                                    elseif strcmp( LimbID{ a}, 'NonInvolvedLimb'  ) && strcmp( HoppingRate_ID{b}, 'TwoPoint3Hz')
-                                
-                                                         %Set the between-limb morphology
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 14 )  = ATxMorphology( n );
-                                                         
-                                                         %Set theVAS rating
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 15 )  = ATxVAS_NonInvolved_TwoPoint3Hz( n );
-                                
+
+
+
+                                                    %Save the Morphology for the current participant
+                                                    Morphology = round( MorphologyLog.DifferenceinTendonThickness_mm( strcmp(  ParticipantList{ n } , MorphologyLog.Participant_ID ) ), 2 );
+                                                    
+                                                    %If processing the ATx group, find the VAS for the current participant, current hop rate, current limb
+                                                    if strcmp( GroupList{m}, 'ATx' )
+                                                
+                                                        %Save the VAS for the current participant
+                                                        VAS = round( VASLog.VAS_Score( strcmp(  ParticipantList{ n } , VASLog.Participant ) & strcmp(  LimbID{a} , VASLog.Limb ) & ( VASLog.HoppingRate == HoppingRate_ID_forTable( b )  ) ), 2 );
+                                                    
+                                                     %VAS for control group is always 0
                                                     else
-                                
-                                                         %Set the between-limb morphology
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 14 )  = ControlMorphology( n );
-                                                         
-                                                         %Set theVAS rating
-                                                        PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 15 )  = ControlVAS;
-                
+                                                    
+                                                        VAS = 0;
+                                                    
                                                     end
+                
+                
+                                                    %Set the between-limb morphology
+                                                    PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 14 ) = Morphology;
+                                                     
+                                                     %Set theVAS rating
+                                                    PreactivationOnsetTime_Table( RowtoFill_OnsetTable, 15 )= VAS;
+                                    
+        
                 
                                                     % Add one to RowtoFill so that next loop iteration will fill
                                                     % in the next row
@@ -6887,11 +6802,9 @@ for m = 1:numel(GroupList)
 
         ParticipantList = ATxParticipantList;
 
-        ParticipantMass = ATxParticipantMass;
-
         HoppingRate_ID = {'PreferredHz', 'TwoHz', 'TwoPoint3Hz'};
 
-        HoppingRate_ID_forTable = [0, 2, 2.3];
+        HoppingRate_ID_forTable = [0, 2, 2.33];
         
         LimbID = [1, 2];
 
@@ -6899,11 +6812,9 @@ for m = 1:numel(GroupList)
 
         ParticipantList = ControlParticipantList;
 
-        ParticipantMass = ControlParticipantMass;
-
         HoppingRate_ID = {'PreferredHz', 'TwoHz', 'TwoPoint3Hz'};
 
-        HoppingRate_ID_forTable = [0, 2, 2.3];
+        HoppingRate_ID_forTable = [0, 2, 2.33];
         
         LimbID = 1;
 
