@@ -1,0 +1,3580 @@
+---
+title: "Joint Power Illustrations"
+author: "David Ortiz"
+date: "1/5/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load Libraries
+```{r Load Libraries echo=false}
+
+library(R.matlab)
+library(ggplot2)
+library(pander)
+library(stargazer)
+library(gridExtra)
+library(ggpubr)
+library(RColorBrewer)
+library(reshape2)
+library(effsize)
+library(ggsignif)
+library(readxl)
+library(lme4)
+library(nlme)
+library(xlsx)
+library(readxl)
+library(DescTools)
+library(dplyr)
+library(MetBrewer)
+```
+
+
+## Load Data
+```{r HC20 Torque/Joint Power Data}
+
+
+HC20_TorquePowerData <- as.data.frame(read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/MBRL Fall 2023/HC20_LeftAnkleKneeHip_TorquePower_2.3Hz.xlsx' ))
+
+
+HC20_TorquePowerData$Joint_ID[which( HC20_TorquePowerData$Joint_ID==1 )] <- 'Ankle'
+HC20_TorquePowerData$Joint_ID[which( HC20_TorquePowerData$Joint_ID==2 )] <- 'Knee'
+HC20_TorquePowerData$Joint_ID[which( HC20_TorquePowerData$Joint_ID==3 )] <- 'Hip'
+
+
+
+```
+
+
+```{r HC20 Segment Power Data}
+
+
+HC20_SegmentPowerData <- as.data.frame(read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/Methods Illustrations/HC17_SegmentTimeSeries_MatchedDominanceLimb.xlsx' ))
+
+
+HC20_SegmentPowerData$Segment_ID[ which( HC20_SegmentPowerData$Segment_ID == 1 ) ] <- 'Foot'
+HC20_SegmentPowerData$Segment_ID[ which( HC20_SegmentPowerData$Segment_ID == 2 ) ] <- 'Shank'
+HC20_SegmentPowerData$Segment_ID[ which( HC20_SegmentPowerData$Segment_ID == 3 ) ] <- 'Thigh'
+HC20_SegmentPowerData$Segment_ID[ which( HC20_SegmentPowerData$Segment_ID == 4 ) ] <- 'Pelvis'
+
+
+#Fucked up the conversion from frames to seconds. Used analog sampling Hz instead of MoCap Hz. Multiply by 1500 then divide by 250
+HC20_SegmentPowerData$Time_s <- ( HC20_SegmentPowerData$Time_s * 1500 ) /250
+HC20_SegmentPowerData$TimeofMinL5S1_s <- ( HC20_SegmentPowerData$TimeofMinL5S1_s * 1500 ) /250
+
+
+```
+
+
+
+
+```{r Hip With Opposite Power}
+
+
+HipOppositePower <- as.data.frame(read_xlsx( '/Users/dortiz23/Documents/R Scripts/Post-Quals/Excel/Power/PowerTimeSeriesWithMismatchedHipPower.xlsx' ) )
+
+HipOppositePower$Joint_ID[ which( HipOppositePower$Joint_ID == 1 )  ] <- 'Ankle'
+HipOppositePower$Joint_ID[ which( HipOppositePower$Joint_ID == 2 )  ] <- 'Knee'
+HipOppositePower$Joint_ID[ which( HipOppositePower$Joint_ID == 3 )  ] <- 'Hip'
+
+HipOppositePower$Joint_ID <- factor( HipOppositePower$Joint_ID  )
+
+
+HipOppositePower$Time_s <- HipOppositePower$Time_s - (1/250)
+
+```
+
+
+
+## DPLYR
+
+
+
+### Split Propulsion and Braking
+
+#### HC20
+
+##### Braking Phase
+
+###### Negative Torque Data Frame
+
+```{r Create Negative Torque Data Frame}
+
+##This code was for selecting the times when all joints showing the same direction for torque
+
+
+HC20_BrakingPhase <- HC20_TorquePowerData %>% filter( Frames <= HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1] )
+
+
+
+
+AnkleNegative_BrakingPhase <- HC20_BrakingPhase$Frames[ which( HC20_BrakingPhase$Joint_Torque[ HC20_BrakingPhase$Joint_ID == 'Ankle' ] < 0 ) ]
+
+KneeNegative_BrakingPhase <- HC20_BrakingPhase$Frames[ which( HC20_BrakingPhase$Joint_Torque[ HC20_BrakingPhase$Joint_ID == 'Knee' ] < 0 ) ]
+
+HipNegative_BrakingPhase <- HC20_BrakingPhase$Frames[ which( HC20_BrakingPhase$Joint_Torque[ HC20_BrakingPhase$Joint_ID == 'Hip' ] < 0 ) ]
+
+
+
+
+
+KneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+for (j in 1 : length( HipNegative_BrakingPhase )  ) {
+   
+   
+   KneeHipMatch <- KneeNegative_BrakingPhase[ KneeNegative_BrakingPhase == HipNegative_BrakingPhase[ j ] ]
+   
+   if ( length( KneeHipMatch != 0 ) ) {
+      
+      
+      KneeHip_FrameMatch <- rbind( KneeHip_FrameMatch, HipNegative_BrakingPhase[ j ] )
+      
+   }
+   
+}
+
+
+AnkleKneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+
+for (k in 1 : dim( KneeHip_FrameMatch )[ 1 ]  ) {
+   
+   
+   AnkleKneeHipMatch <- AnkleNegative_BrakingPhase[ AnkleNegative_BrakingPhase == KneeHip_FrameMatch[ k, 1 ] ]
+   
+   if ( length( AnkleKneeHipMatch != 0 ) ) {
+      
+      
+      AnkleKneeHip_FrameMatch <- rbind( AnkleKneeHip_FrameMatch, KneeHip_FrameMatch[ k, 1 ] )
+      
+   }
+   
+}
+
+
+
+
+for ( l in 1 : dim( AnkleKneeHip_FrameMatch )[ 1 ] ) {
+   
+   
+   
+   if ( l == 1 ) {
+      
+      
+      for ( m in 1 : 3 ) {
+      
+         Frame1 <- which( HC20_BrakingPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+         
+         #Begin M For Loop
+         if ( m == 1 ) { 
+            
+            
+            HC20_BrakingPhase_AllJointsNegativeTorque <- HC20_BrakingPhase[ Frame1, ]
+            
+         } else { #Else statement for M
+               
+            
+            HC20_BrakingPhase_AllJointsNegativeTorque <- rbind( HC20_BrakingPhase_AllJointsNegativeTorque, HC20_BrakingPhase[ Frame1, ] )
+            
+            }#End M If statement
+      
+      
+      }#End M For loop
+      
+      
+      
+   } else { #Else statement for L
+      
+   
+      
+         for ( m in 1 : 3 ) {
+      
+            Frame1 <- which( HC20_BrakingPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+            
+               
+            HC20_BrakingPhase_AllJointsNegativeTorque <- rbind( HC20_BrakingPhase_AllJointsNegativeTorque, HC20_BrakingPhase[ Frame1, ] )
+            
+            }#End M Foor loop
+      
+      
+      }#End L If Statement
+   
+   
+}#End L For Loop
+
+
+
+```
+
+
+
+```{r Split Negative Torque Into Each Joint}
+
+
+##This code was for selecting the times when all joints showing the same direction for torque
+
+HC20_BrakingPhase_Ankle <- HC20_BrakingPhase %>% filter( Joint_ID == 'Ankle' )
+
+HC20_BrakingPhase_Knee <- HC20_BrakingPhase %>% filter( Joint_ID == 'Knee' )
+
+HC20_BrakingPhase_Hip <- HC20_BrakingPhase %>% filter( Joint_ID == 'Hip' )
+
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativeTorque <- HC20_BrakingPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Ankle' )
+
+
+HC20_BrakingPhase_Knee_AllJointsNegativeTorque <- HC20_BrakingPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Knee' )
+
+
+HC20_BrakingPhase_Hip_AllJointsNegativeTorque <- HC20_BrakingPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Hip' )
+
+
+
+
+HC20_SupportMoment_BrakingPhase = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque$Joint_Torque + HC20_BrakingPhase_Knee_AllJointsNegativeTorque$Joint_Torque + HC20_BrakingPhase_Hip_AllJointsNegativeTorque$Joint_Torque
+
+
+FrameofPeakSupportMoment_BrakingPhase <- HC20_BrakingPhase_Ankle_AllJointsNegativeTorque$Frames[ which( HC20_SupportMoment_BrakingPhase == min( HC20_SupportMoment_BrakingPhase ) ) ]
+
+TimeofPeakSupportMoment_BrakingPhase <- HC20_BrakingPhase_Ankle_AllJointsNegativeTorque$Time_sec[ which( HC20_SupportMoment_BrakingPhase == min( HC20_SupportMoment_BrakingPhase ) ) ]
+
+
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1 <- HC20_BrakingPhase_Ankle_AllJointsNegativeTorque %>% filter( Frames <= 20 )
+
+HC20_BrakingPhase_Knee_AllJointsNegativeTorque_Period1 <- HC20_BrakingPhase_Knee_AllJointsNegativeTorque %>% filter( Frames <= 20 )
+
+HC20_BrakingPhase_Hip_AllJointsNegativeTorque_Period1 <- HC20_BrakingPhase_Hip_AllJointsNegativeTorque %>% filter( Frames <= 20 )
+
+
+
+
+
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2 <- HC20_BrakingPhase_Ankle_AllJointsNegativeTorque %>% filter( Frames > 20  )
+
+HC20_BrakingPhase_Knee_AllJointsNegativeTorque_Period2 <- HC20_BrakingPhase_Knee_AllJointsNegativeTorque %>% filter( Frames > 20  )
+
+HC20_BrakingPhase_Hip_AllJointsNegativeTorque_Period2 <- HC20_BrakingPhase_Hip_AllJointsNegativeTorque %>% filter( Frames > 20  )
+
+
+
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$AreaOfInterest1 <- -3.3
+HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$AreaOfInterest2 <- 0.5
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$AreaOfInterest1 <- -3.3
+HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$AreaOfInterest2 <- 0.5
+
+```
+
+
+
+##### Negative Joint Power Data Frame
+```{r Create Negative Power Data Frame}
+
+
+##This code was for selecting the times when all joints showing the same direction for power
+
+HC20_BrakingPhase_Ankle <- HC20_BrakingPhase %>% filter( Joint_ID == 'Ankle' )
+
+HC20_BrakingPhase_Knee <- HC20_BrakingPhase %>% filter( Joint_ID == 'Knee' )
+
+HC20_BrakingPhase_Hip <- HC20_BrakingPhase %>% filter( Joint_ID == 'Hip' )
+
+
+
+
+HC20_BrakingPhase <- HC20_TorquePowerData %>% filter( Frames <= HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1] )
+
+
+
+
+AnkleNegative_BrakingPhase <- HC20_BrakingPhase$Frames[ which( HC20_BrakingPhase$Joint_Power[ HC20_BrakingPhase$Joint_ID == 'Ankle' ] < 0 ) ]
+
+KneeNegative_BrakingPhase <- HC20_BrakingPhase$Frames[ which( HC20_BrakingPhase$Joint_Power[ HC20_BrakingPhase$Joint_ID == 'Knee' ] < 0 ) ]
+
+HipNegative_BrakingPhase <- HC20_BrakingPhase$Frames[ which( HC20_BrakingPhase$Joint_Power[ HC20_BrakingPhase$Joint_ID == 'Hip' ] < 0 ) ]
+
+
+
+
+
+KneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+for (j in 1 : length( HipNegative_BrakingPhase )  ) {
+   
+   
+   KneeHipMatch <- KneeNegative_BrakingPhase[ KneeNegative_BrakingPhase == HipNegative_BrakingPhase[ j ] ]
+   
+   if ( length( KneeHipMatch != 0 ) ) {
+      
+      
+      KneeHip_FrameMatch <- rbind( KneeHip_FrameMatch, HipNegative_BrakingPhase[ j ] )
+      
+   }
+   
+}
+
+
+AnkleKneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+
+for (k in 1 : dim( KneeHip_FrameMatch )[ 1 ]  ) {
+   
+   
+   AnkleKneeHipMatch <- AnkleNegative_BrakingPhase[ AnkleNegative_BrakingPhase == KneeHip_FrameMatch[ k, 1 ] ]
+   
+   if ( length( AnkleKneeHipMatch != 0 ) ) {
+      
+      
+      AnkleKneeHip_FrameMatch <- rbind( AnkleKneeHip_FrameMatch, KneeHip_FrameMatch[ k, 1 ] )
+      
+   }
+   
+}
+
+
+
+
+for ( l in 1 : dim( AnkleKneeHip_FrameMatch )[ 1 ] ) {
+   
+   
+   
+   if ( l == 1 ) {
+      
+      
+      for ( m in 1 : 3 ) {
+      
+         Frame1 <- which( HC20_BrakingPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+         
+         #Begin M For Loop
+         if ( m == 1 ) { 
+            
+            
+            HC20_BrakingPhase_AllJointsNegativePower <- HC20_BrakingPhase[ Frame1, ]
+            
+         } else { #Else statement for M
+               
+            
+            HC20_BrakingPhase_AllJointsNegativePower <- rbind( HC20_BrakingPhase_AllJointsNegativePower, HC20_BrakingPhase[ Frame1, ] )
+            
+            }#End M If statement
+      
+      
+      }#End M For loop
+      
+      
+      
+   } else { #Else statement for L
+      
+   
+      
+         for ( m in 1 : 3 ) {
+      
+            Frame1 <- which( HC20_BrakingPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+            
+               
+            HC20_BrakingPhase_AllJointsNegativePower <- rbind( HC20_BrakingPhase_AllJointsNegativePower, HC20_BrakingPhase[ Frame1, ] )
+            
+            }#End M Foor loop
+      
+      
+      }#End L If Statement
+   
+   
+}#End L For Loop
+
+
+
+```
+
+
+
+```{r Split Negative Power Into Each Joint}
+
+
+##This code was for selecting the times when all joints showing the same direction for power
+
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativePower <- HC20_BrakingPhase_AllJointsNegativePower %>% filter( Joint_ID == 'Ankle' )
+
+
+HC20_BrakingPhase_Knee_AllJointsNegativePower <- HC20_BrakingPhase_AllJointsNegativePower %>% filter( Joint_ID == 'Knee' )
+
+
+HC20_BrakingPhase_Hip_AllJointsNegativePower <- HC20_BrakingPhase_AllJointsNegativePower %>% filter( Joint_ID == 'Hip' )
+
+
+
+
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1 <- HC20_BrakingPhase_Ankle_AllJointsNegativePower %>% filter( Frames <= 20 )
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$AreaOfInterest1 <- -10
+HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$AreaOfInterest2 <- 8
+
+HC20_BrakingPhase_Knee_AllJointsNegativePower_Period1 <- HC20_BrakingPhase_Knee_AllJointsNegativePower %>% filter( Frames <= 20 )
+
+HC20_BrakingPhase_Hip_AllJointsNegativePower_Period1 <- HC20_BrakingPhase_Hip_AllJointsNegativePower %>% filter( Frames <= 20 )
+
+
+
+
+
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2 <- HC20_BrakingPhase_Ankle_AllJointsNegativePower %>% filter( Frames > 20 & Frames < 41  )
+
+
+HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$AreaOfInterest1 <- -10
+HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$AreaOfInterest2 <- 8
+
+HC20_BrakingPhase_Knee_AllJointsNegativePower_Period2 <- HC20_BrakingPhase_Knee_AllJointsNegativePower %>% filter( Frames > 20 & Frames < 41  )
+
+HC20_BrakingPhase_Hip_AllJointsNegativePower_Period2 <- HC20_BrakingPhase_Hip_AllJointsNegativePower %>% filter( Frames > 20 & Frames < 41  )
+
+
+
+
+```
+
+##### Segment Power
+```{r Split Into Braking and Propulsion Phases}
+
+#Create new data frame containing only the braking phase of segment power. TimeofMinL5S1_s is the end of the braking phase
+SegmentPower_BrakingPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s <= TimeofMinL5S1_s )
+
+#Create new data frame containing only the propulsion phase of segment power. Propulsion begins after TimeofMinL5S1_s
+SegmentPower_PropulsionPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s > TimeofMinL5S1_s )
+
+
+```
+
+
+
+
+```{r Separate The Segments}
+
+#Create new data frame containing only the braking phase foot data. TimeofMinL5S1_s is the end of the braking phase
+FootPower_BrakingPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s <= TimeofMinL5S1_s, Segment_ID == 'Foot' )
+
+#Create new data frame containing only the braking phase Shank data. TimeofMinL5S1_s is the end of the braking phase
+ShankPower_BrakingPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s <= TimeofMinL5S1_s, Segment_ID == 'Shank' )
+
+#Create new data frame containing only the braking phase Thigh data. TimeofMinL5S1_s is the end of the braking phase
+ThighPower_BrakingPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s <= TimeofMinL5S1_s, Segment_ID == 'Thigh' )
+
+#Create new data frame containing only the braking phase Pelvis data. TimeofMinL5S1_s is the end of the braking phase
+PelvisPower_BrakingPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s <= TimeofMinL5S1_s, Segment_ID == 'Pelvis' )
+
+
+
+
+
+
+##PROPULSION PHASE
+
+#Create new data frame containing only the Propulsion phase foot data. Propulsion begins after TimeofMinL5S1_s
+FootPower_PropulsionPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s > TimeofMinL5S1_s, Segment_ID == 'Foot' )
+
+#Create new data frame containing only the Propulsion phase Shank data. Propulsion begins after TimeofMinL5S1_s
+ShankPower_PropulsionPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s >= TimeofMinL5S1_s, Segment_ID == 'Shank' )
+
+#Create new data frame containing only the Propulsion phase Thigh data. Propulsion begins after TimeofMinL5S1_s
+ThighPower_PropulsionPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s >= TimeofMinL5S1_s, Segment_ID == 'Thigh' )
+
+#Create new data frame containing only the Propulsion phase Pelvis data. Propulsion begins after TimeofMinL5S1_s
+PelvisPower_PropulsionPhase <- HC20_SegmentPowerData %>%
+   filter( Time_s >= TimeofMinL5S1_s, Segment_ID == 'Pelvis' )
+
+
+```
+
+
+
+##### Propulsion Phase
+
+###### Negative Torque Data Frame
+```{r Create Negative Torque Data Frame}
+
+
+
+##This code was for selecting the times when all joints showing the same direction for power
+
+HC20_PropulsionPhase <- HC20_TorquePowerData %>% filter( Frames >= HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1] )
+
+
+
+AnklePositive_PropulsionPhase <- HC20_PropulsionPhase$Frames[ which( HC20_PropulsionPhase$Joint_Torque[ HC20_PropulsionPhase$Joint_ID == 'Ankle' ] < 0 ) ]
+
+KneePositive_PropulsionPhase <- HC20_PropulsionPhase$Frames[ which( HC20_PropulsionPhase$Joint_Torque[ HC20_PropulsionPhase$Joint_ID == 'Knee' ] < 0 ) ]
+
+HipPositive_PropulsionPhase <- HC20_PropulsionPhase$Frames[ which( HC20_PropulsionPhase$Joint_Torque[ HC20_PropulsionPhase$Joint_ID == 'Hip' ] < 0 ) ]
+
+
+
+
+
+KneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+for (j in 1 : length( HipPositive_PropulsionPhase )  ) {
+   
+   
+   KneeHipMatch <- KneePositive_PropulsionPhase[ KneePositive_PropulsionPhase == HipPositive_PropulsionPhase[ j ] ]
+   
+   if ( length( KneeHipMatch != 0 ) ) {
+      
+      
+      KneeHip_FrameMatch <- rbind( KneeHip_FrameMatch, HipPositive_PropulsionPhase[ j ] )
+      
+   }
+   
+}
+
+
+AnkleKneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+
+for (k in 1 : dim( KneeHip_FrameMatch )[ 1 ]  ) {
+   
+   
+   AnkleKneeHipMatch <- AnklePositive_PropulsionPhase[ AnklePositive_PropulsionPhase == KneeHip_FrameMatch[ k, 1 ] ]
+   
+   if ( length( AnkleKneeHipMatch != 0 ) ) {
+      
+      
+      AnkleKneeHip_FrameMatch <- rbind( AnkleKneeHip_FrameMatch, KneeHip_FrameMatch[ k, 1 ] )
+      
+   }
+   
+}
+
+
+
+
+for ( l in 1 : dim( AnkleKneeHip_FrameMatch )[ 1 ] ) {
+   
+   
+   
+   if ( l == 1 ) {
+      
+      
+      for ( m in 1 : 3 ) {
+      
+         Frame1 <- which( HC20_PropulsionPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+         
+         #Begin M For Loop
+         if ( m == 1 ) { 
+            
+            
+            HC20_PropulsionPhase_AllJointsNegativeTorque <- HC20_PropulsionPhase[ Frame1, ]
+            
+         } else { #Else statement for M
+               
+            
+            HC20_PropulsionPhase_AllJointsNegativeTorque <- rbind( HC20_PropulsionPhase_AllJointsNegativeTorque, HC20_PropulsionPhase[ Frame1, ] )
+            
+            }#End M If statement
+      
+      
+      }#End M For loop
+      
+      
+      
+   } else { #Else statement for L
+      
+   
+      
+         for ( m in 1 : 3 ) {
+      
+            Frame1 <- which( HC20_PropulsionPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+            
+               
+            HC20_PropulsionPhase_AllJointsNegativeTorque <- rbind( HC20_PropulsionPhase_AllJointsNegativeTorque, HC20_PropulsionPhase[ Frame1, ] )
+            
+            }#End M Foor loop
+      
+      
+      }#End L If Statement
+   
+   
+}#End L For Loop
+
+
+
+```
+
+
+
+
+```{r Split Negative Torque Into Each Joint}
+
+
+##This code was for selecting the times when all joints showing the same direction for power
+
+
+
+HC20_PropulsionPhase_Ankle <- HC20_PropulsionPhase %>% filter( Joint_ID == 'Ankle' )
+
+HC20_PropulsionPhase_Knee <- HC20_PropulsionPhase %>% filter( Joint_ID == 'Knee' )
+
+HC20_PropulsionPhase_Hip <- HC20_PropulsionPhase %>% filter( Joint_ID == 'Hip' )
+
+
+
+HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque <- HC20_PropulsionPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Ankle' )
+
+
+HC20_PropulsionPhase_Knee_AllJointsNegativeTorque <- HC20_PropulsionPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Knee' )
+
+
+HC20_PropulsionPhase_Hip_AllJointsNegativeTorque <- HC20_PropulsionPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Hip' )
+
+
+
+HC20_SupportMoment_PropulsionPhase = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$Joint_Torque + HC20_PropulsionPhase_Knee_AllJointsNegativeTorque$Joint_Torque + HC20_PropulsionPhase_Hip_AllJointsNegativeTorque$Joint_Torque
+
+
+
+FrameofPeakSupportMoment_PropulsionPhase <- HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$Frames[ which( HC20_SupportMoment_PropulsionPhase == min( HC20_SupportMoment_PropulsionPhase ) ) ]
+
+TimeofPeakSupportMoment_PropulsionPhase <- HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$Time_sec[ which( HC20_SupportMoment_PropulsionPhase == min( HC20_SupportMoment_PropulsionPhase ) ) ]
+
+
+
+HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$AreaOfInterest1 <- -3.3
+HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$AreaOfInterest2 <- 0.5
+
+```
+
+
+
+###### Positive Power Data Frame
+```{r Create Data Frame}
+
+
+
+##This code was for selecting the times when all joints showing the same direction for power
+
+
+
+HC20_PropulsionPhase_Ankle <- HC20_PropulsionPhase %>% filter( Joint_ID == 'Ankle' )
+
+HC20_PropulsionPhase_Knee <- HC20_PropulsionPhase %>% filter( Joint_ID == 'Knee' )
+
+HC20_PropulsionPhase_Hip <- HC20_PropulsionPhase %>% filter( Joint_ID == 'Hip' )
+
+
+HC20_PropulsionPhase <- HC20_TorquePowerData %>% filter( Frames >= HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1] )
+
+
+
+AnklePositive_PropulsionPhase <- HC20_PropulsionPhase$Frames[ which( HC20_PropulsionPhase$Joint_Power[ HC20_PropulsionPhase$Joint_ID == 'Ankle' ] > 0 ) ]
+
+KneePositive_PropulsionPhase <- HC20_PropulsionPhase$Frames[ which( HC20_PropulsionPhase$Joint_Power[ HC20_PropulsionPhase$Joint_ID == 'Knee' ] > 0 ) ]
+
+HipPositive_PropulsionPhase <- HC20_PropulsionPhase$Frames[ which( HC20_PropulsionPhase$Joint_Power[ HC20_PropulsionPhase$Joint_ID == 'Hip' ] > 0 ) ]
+
+
+
+
+
+KneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+for (j in 1 : length( HipPositive_PropulsionPhase )  ) {
+   
+   
+   KneeHipMatch <- KneePositive_PropulsionPhase[ KneePositive_PropulsionPhase == HipPositive_PropulsionPhase[ j ] ]
+   
+   if ( length( KneeHipMatch != 0 ) ) {
+      
+      
+      KneeHip_FrameMatch <- rbind( KneeHip_FrameMatch, HipPositive_PropulsionPhase[ j ] )
+      
+   }
+   
+}
+
+
+AnkleKneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+
+for (k in 1 : dim( KneeHip_FrameMatch )[ 1 ]  ) {
+   
+   
+   AnkleKneeHipMatch <- AnklePositive_PropulsionPhase[ AnklePositive_PropulsionPhase == KneeHip_FrameMatch[ k, 1 ] ]
+   
+   if ( length( AnkleKneeHipMatch != 0 ) ) {
+      
+      
+      AnkleKneeHip_FrameMatch <- rbind( AnkleKneeHip_FrameMatch, KneeHip_FrameMatch[ k, 1 ] )
+      
+   }
+   
+}
+
+
+
+
+for ( l in 1 : dim( AnkleKneeHip_FrameMatch )[ 1 ] ) {
+   
+   
+   
+   if ( l == 1 ) {
+      
+      
+      for ( m in 1 : 3 ) {
+      
+         Frame1 <- which( HC20_PropulsionPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+         
+         #Begin M For Loop
+         if ( m == 1 ) { 
+            
+            
+            HC20_PropulsionPhase_AllJointsPositivePower <- HC20_PropulsionPhase[ Frame1, ]
+            
+         } else { #Else statement for M
+               
+            
+            HC20_PropulsionPhase_AllJointsPositivePower <- rbind( HC20_PropulsionPhase_AllJointsPositivePower, HC20_PropulsionPhase[ Frame1, ] )
+            
+            }#End M If statement
+      
+      
+      }#End M For loop
+      
+      
+      
+   } else { #Else statement for L
+      
+   
+      
+         for ( m in 1 : 3 ) {
+      
+            Frame1 <- which( HC20_PropulsionPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+            
+               
+            HC20_PropulsionPhase_AllJointsPositivePower <- rbind( HC20_PropulsionPhase_AllJointsPositivePower, HC20_PropulsionPhase[ Frame1, ] )
+            
+            }#End M Foor loop
+      
+      
+      }#End L If Statement
+   
+   
+}#End L For Loop
+
+
+
+```
+
+
+
+```{r Split Positive Power Into Each Joint}
+
+
+
+##This code was for selecting the times when all joints showing the same direction for power
+
+
+
+HC20_PropulsionPhase_Ankle_AllJointsPositivePower <- HC20_PropulsionPhase_AllJointsPositivePower %>% filter( Joint_ID == 'Ankle' )
+
+
+HC20_PropulsionPhase_Knee_AllJointsPositivePower <- HC20_PropulsionPhase_AllJointsPositivePower %>% filter( Joint_ID == 'Knee' )
+
+
+HC20_PropulsionPhase_Hip_AllJointsPositivePower <- HC20_PropulsionPhase_AllJointsPositivePower %>% filter( Joint_ID == 'Hip' )
+
+
+
+
+
+HC20_PropulsionPhase_Ankle_AllJointsPositivePower$AreaOfInterest1 <- -10
+HC20_PropulsionPhase_Ankle_AllJointsPositivePower$AreaOfInterest2 <- 8
+
+
+
+```
+
+
+
+
+#### HC21
+
+##### Braking Phase
+
+###### Negative Torque Data Frame
+```{r Create Negative Torque Data Frame}
+
+
+HC21_BrakingPhase <- HC21_TorquePowerData %>% filter( Frames <= HC21_TorquePowerData$TimeofMinL5S1VerticalPosition[1] )
+
+
+
+
+AnkleNegative_BrakingPhase <- HC21_BrakingPhase$Frames[ which( HC21_BrakingPhase$Joint_Torque[ HC21_BrakingPhase$Joint_ID == 'Ankle' ] < 0 ) ]
+
+KneeNegative_BrakingPhase <- HC21_BrakingPhase$Frames[ which( HC21_BrakingPhase$Joint_Torque[ HC21_BrakingPhase$Joint_ID == 'Knee' ] < 0 ) ]
+
+HipNegative_BrakingPhase <- HC21_BrakingPhase$Frames[ which( HC21_BrakingPhase$Joint_Torque[ HC21_BrakingPhase$Joint_ID == 'Hip' ] < 0 ) ]
+
+
+
+
+
+KneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+for (j in 1 : length( HipNegative_BrakingPhase )  ) {
+   
+   
+   KneeHipMatch <- KneeNegative_BrakingPhase[ KneeNegative_BrakingPhase == HipNegative_BrakingPhase[ j ] ]
+   
+   if ( length( KneeHipMatch != 0 ) ) {
+      
+      
+      KneeHip_FrameMatch <- rbind( KneeHip_FrameMatch, HipNegative_BrakingPhase[ j ] )
+      
+   }
+   
+}
+
+
+AnkleKneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+
+for (k in 1 : dim( KneeHip_FrameMatch )[ 1 ]  ) {
+   
+   
+   AnkleKneeHipMatch <- AnkleNegative_BrakingPhase[ AnkleNegative_BrakingPhase == KneeHip_FrameMatch[ k, 1 ] ]
+   
+   if ( length( AnkleKneeHipMatch != 0 ) ) {
+      
+      
+      AnkleKneeHip_FrameMatch <- rbind( AnkleKneeHip_FrameMatch, KneeHip_FrameMatch[ k, 1 ] )
+      
+   }
+   
+}
+
+
+
+
+for ( l in 1 : dim( AnkleKneeHip_FrameMatch )[ 1 ] ) {
+   
+   
+   
+   if ( l == 1 ) {
+      
+      
+      for ( m in 1 : 3 ) {
+      
+         Frame1 <- which( HC21_BrakingPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+         
+         #Begin M For Loop
+         if ( m == 1 ) { 
+            
+            
+            HC21_BrakingPhase_AllJointsNegativeTorque <- HC21_BrakingPhase[ Frame1, ]
+            
+         } else { #Else statement for M
+               
+            
+            HC21_BrakingPhase_AllJointsNegativeTorque <- rbind( HC21_BrakingPhase_AllJointsNegativeTorque, HC21_BrakingPhase[ Frame1, ] )
+            
+            }#End M If statement
+      
+      
+      }#End M For loop
+      
+      
+      
+   } else { #Else statement for L
+      
+   
+      
+         for ( m in 1 : 3 ) {
+      
+            Frame1 <- which( HC21_BrakingPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+            
+               
+            HC21_BrakingPhase_AllJointsNegativeTorque <- rbind( HC21_BrakingPhase_AllJointsNegativeTorque, HC21_BrakingPhase[ Frame1, ] )
+            
+            }#End M Foor loop
+      
+      
+      }#End L If Statement
+   
+   
+}#End L For Loop
+
+
+
+```
+
+
+
+```{r Split Negative Torque Into Each Joint}
+
+
+
+HC21_BrakingPhase_Ankle <- HC21_BrakingPhase %>% filter( Joint_ID == 'Ankle' )
+
+HC21_BrakingPhase_Knee <- HC21_BrakingPhase %>% filter( Joint_ID == 'Knee' )
+
+HC21_BrakingPhase_Hip <- HC21_BrakingPhase %>% filter( Joint_ID == 'Hip' )
+
+
+
+HC21_BrakingPhase_Ankle_AllJointsNegativeTorque <- HC21_BrakingPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Ankle' )
+
+
+HC21_BrakingPhase_Knee_AllJointsNegativeTorque <- HC21_BrakingPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Knee' )
+
+
+HC21_BrakingPhase_Hip_AllJointsNegativeTorque <- HC21_BrakingPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Hip' )
+
+
+
+HC21_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1 <- HC21_BrakingPhase_Ankle_AllJointsNegativeTorque %>% filter( Frames < 5 )
+
+HC21_BrakingPhase_Knee_AllJointsNegativeTorque_Period1 <- HC21_BrakingPhase_Knee_AllJointsNegativeTorque %>% filter( Frames < 5 )
+
+HC21_BrakingPhase_Hip_AllJointsNegativeTorque_Period1 <- HC21_BrakingPhase_Hip_AllJointsNegativeTorque %>% filter( Frames < 5 )
+
+
+
+
+
+
+
+HC21_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2 <- HC21_BrakingPhase_Ankle_AllJointsNegativeTorque %>% filter( Frames > 4  )
+
+HC21_BrakingPhase_Knee_AllJointsNegativeTorque_Period2 <- HC21_BrakingPhase_Knee_AllJointsNegativeTorque %>% filter( Frames > 4  )
+
+HC21_BrakingPhase_Hip_AllJointsNegativeTorque_Period2 <- HC21_BrakingPhase_Hip_AllJointsNegativeTorque %>% filter( Frames > 4  )
+
+
+```
+
+
+
+##### Negative Power Data Frame
+```{r Create Negative Power Data Frame}
+
+
+
+HC21_BrakingPhase <- HC21_TorquePowerData %>% filter( Frames <= HC21_TorquePowerData$TimeofMinL5S1VerticalPosition[1] )
+
+
+
+
+AnkleNegative_BrakingPhase <- HC21_BrakingPhase$Frames[ which( HC21_BrakingPhase$Joint_Power[ HC21_BrakingPhase$Joint_ID == 'Ankle' ] < 0 ) ]
+
+KneeNegative_BrakingPhase <- HC21_BrakingPhase$Frames[ which( HC21_BrakingPhase$Joint_Power[ HC21_BrakingPhase$Joint_ID == 'Knee' ] < 0 ) ]
+
+HipNegative_BrakingPhase <- HC21_BrakingPhase$Frames[ which( HC21_BrakingPhase$Joint_Power[ HC21_BrakingPhase$Joint_ID == 'Hip' ] < 0 ) ]
+
+
+
+
+
+KneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+for (j in 1 : length( HipNegative_BrakingPhase )  ) {
+   
+   
+   KneeHipMatch <- KneeNegative_BrakingPhase[ KneeNegative_BrakingPhase == HipNegative_BrakingPhase[ j ] ]
+   
+   if ( length( KneeHipMatch != 0 ) ) {
+      
+      
+      KneeHip_FrameMatch <- rbind( KneeHip_FrameMatch, HipNegative_BrakingPhase[ j ] )
+      
+   }
+   
+}
+
+
+AnkleKneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+
+for (k in 1 : dim( KneeHip_FrameMatch )[ 1 ]  ) {
+   
+   
+   AnkleKneeHipMatch <- AnkleNegative_BrakingPhase[ AnkleNegative_BrakingPhase == KneeHip_FrameMatch[ k, 1 ] ]
+   
+   if ( length( AnkleKneeHipMatch != 0 ) ) {
+      
+      
+      AnkleKneeHip_FrameMatch <- rbind( AnkleKneeHip_FrameMatch, KneeHip_FrameMatch[ k, 1 ] )
+      
+   }
+   
+}
+
+
+
+
+for ( l in 1 : dim( AnkleKneeHip_FrameMatch )[ 1 ] ) {
+   
+   
+   
+   if ( l == 1 ) {
+      
+      
+      for ( m in 1 : 3 ) {
+      
+         Frame1 <- which( HC21_BrakingPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+         
+         #Begin M For Loop
+         if ( m == 1 ) { 
+            
+            
+            HC21_BrakingPhase_AllJointsNegativePower <- HC21_BrakingPhase[ Frame1, ]
+            
+         } else { #Else statement for M
+               
+            
+            HC21_BrakingPhase_AllJointsNegativePower <- rbind( HC21_BrakingPhase_AllJointsNegativePower, HC21_BrakingPhase[ Frame1, ] )
+            
+            }#End M If statement
+      
+      
+      }#End M For loop
+      
+      
+      
+   } else { #Else statement for L
+      
+   
+      
+         for ( m in 1 : 3 ) {
+      
+            Frame1 <- which( HC21_BrakingPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+            
+               
+            HC21_BrakingPhase_AllJointsNegativePower <- rbind( HC21_BrakingPhase_AllJointsNegativePower, HC21_BrakingPhase[ Frame1, ] )
+            
+            }#End M Foor loop
+      
+      
+      }#End L If Statement
+   
+   
+}#End L For Loop
+
+
+
+```
+
+
+
+```{r Split Negative Power Into Each Joint}
+
+HC21_BrakingPhase_Ankle_AllJointsNegativePower <- HC21_BrakingPhase_AllJointsNegativePower %>% filter( Joint_ID == 'Ankle' )
+
+
+HC21_BrakingPhase_Knee_AllJointsNegativePower <- HC21_BrakingPhase_AllJointsNegativePower %>% filter( Joint_ID == 'Knee' )
+
+
+HC21_BrakingPhase_Hip_AllJointsNegativePower <- HC21_BrakingPhase_AllJointsNegativePower %>% filter( Joint_ID == 'Hip' )
+
+
+
+
+
+
+HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1 <- HC21_BrakingPhase_Ankle_AllJointsNegativePower %>% filter( Frames < 7 )
+
+
+HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$AreaOfInterest <- 9
+
+HC21_BrakingPhase_Knee_AllJointsNegativePower_Period1 <- HC21_BrakingPhase_Knee_AllJointsNegativePower %>% filter( Frames < 7 )
+
+HC21_BrakingPhase_Hip_AllJointsNegativePower_Period1 <- HC21_BrakingPhase_Hip_AllJointsNegativePower %>% filter( Frames < 7 )
+
+
+
+
+
+
+
+HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2 <- HC21_BrakingPhase_Ankle_AllJointsNegativePower %>% filter( Frames > 6  )
+
+
+HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$AreaOfInterest1 <- 9
+
+
+HC21_BrakingPhase_Knee_AllJointsNegativePower_Period2 <- HC21_BrakingPhase_Knee_AllJointsNegativePower %>% filter( Frames > 6  )
+
+HC21_BrakingPhase_Hip_AllJointsNegativePower_Period2 <- HC21_BrakingPhase_Hip_AllJointsNegativePower %>% filter( Frames > 6  )
+
+
+
+
+```
+
+
+
+
+##### Propulsion Phase
+
+###### Negative Torque Data Frame
+```{r Create Negative Torque Data Frame}
+
+
+
+
+HC21_PropulsionPhase <- HC21_TorquePowerData %>% filter( Frames >= HC21_TorquePowerData$TimeofMinL5S1VerticalPosition[1] + 1 )
+
+
+
+AnklePositive_PropulsionPhase <- HC21_PropulsionPhase$Frames[ which( HC21_PropulsionPhase$Joint_Torque[ HC21_PropulsionPhase$Joint_ID == 'Ankle' ] < 0 ) ]
+
+KneePositive_PropulsionPhase <- HC21_PropulsionPhase$Frames[ which( HC21_PropulsionPhase$Joint_Torque[ HC21_PropulsionPhase$Joint_ID == 'Knee' ] < 0 ) ]
+
+HipPositive_PropulsionPhase <- HC21_PropulsionPhase$Frames[ which( HC21_PropulsionPhase$Joint_Torque[ HC21_PropulsionPhase$Joint_ID == 'Hip' ] < 0 ) ]
+
+
+
+
+
+KneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+for (j in 1 : length( HipPositive_PropulsionPhase )  ) {
+   
+   
+   KneeHipMatch <- KneePositive_PropulsionPhase[ KneePositive_PropulsionPhase == HipPositive_PropulsionPhase[ j ] ]
+   
+   if ( length( KneeHipMatch != 0 ) ) {
+      
+      
+      KneeHip_FrameMatch <- rbind( KneeHip_FrameMatch, HipPositive_PropulsionPhase[ j ] )
+      
+   }
+   
+}
+
+
+AnkleKneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+
+for (k in 1 : dim( KneeHip_FrameMatch )[ 1 ]  ) {
+   
+   
+   AnkleKneeHipMatch <- AnklePositive_PropulsionPhase[ AnklePositive_PropulsionPhase == KneeHip_FrameMatch[ k, 1 ] ]
+   
+   if ( length( AnkleKneeHipMatch != 0 ) ) {
+      
+      
+      AnkleKneeHip_FrameMatch <- rbind( AnkleKneeHip_FrameMatch, KneeHip_FrameMatch[ k, 1 ] )
+      
+   }
+   
+}
+
+
+
+
+for ( l in 1 : dim( AnkleKneeHip_FrameMatch )[ 1 ] ) {
+   
+   
+   
+   if ( l == 1 ) {
+      
+      
+      for ( m in 1 : 3 ) {
+      
+         Frame1 <- which( HC21_PropulsionPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+         
+         #Begin M For Loop
+         if ( m == 1 ) { 
+            
+            
+            HC21_PropulsionPhase_AllJointsNegativeTorque <- HC21_PropulsionPhase[ Frame1, ]
+            
+         } else { #Else statement for M
+               
+            
+            HC21_PropulsionPhase_AllJointsNegativeTorque <- rbind( HC21_PropulsionPhase_AllJointsNegativeTorque, HC21_PropulsionPhase[ Frame1, ] )
+            
+            }#End M If statement
+      
+      
+      }#End M For loop
+      
+      
+      
+   } else { #Else statement for L
+      
+   
+      
+         for ( m in 1 : 3 ) {
+      
+            Frame1 <- which( HC21_PropulsionPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+            
+               
+            HC21_PropulsionPhase_AllJointsNegativeTorque <- rbind( HC21_PropulsionPhase_AllJointsNegativeTorque, HC21_PropulsionPhase[ Frame1, ] )
+            
+            }#End M Foor loop
+      
+      
+      }#End L If Statement
+   
+   
+}#End L For Loop
+
+
+
+```
+
+
+
+
+```{r Split Negative Torque Into Each Joint}
+
+
+HC21_PropulsionPhase_Ankle <- HC21_PropulsionPhase %>% filter( Joint_ID == 'Ankle' )
+
+HC21_PropulsionPhase_Knee <- HC21_PropulsionPhase %>% filter( Joint_ID == 'Knee' )
+
+HC21_PropulsionPhase_Hip <- HC21_PropulsionPhase %>% filter( Joint_ID == 'Hip' )
+
+
+
+HC21_PropulsionPhase_Ankle_AllJointsNegativeTorque <- HC21_PropulsionPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Ankle' )
+
+
+HC21_PropulsionPhase_Knee_AllJointsNegativeTorque <- HC21_PropulsionPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Knee' )
+
+
+HC21_PropulsionPhase_Hip_AllJointsNegativeTorque <- HC21_PropulsionPhase_AllJointsNegativeTorque %>% filter( Joint_ID == 'Hip' )
+
+
+
+
+
+
+
+
+
+HC21_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period1 <- HC21_PropulsionPhase_Ankle_AllJointsNegativeTorque %>% filter( Frames < 59 )
+
+HC21_PropulsionPhase_Knee_AllJointsNegativeTorque_Period1 <- HC21_PropulsionPhase_Knee_AllJointsNegativeTorque %>% filter( Frames < 59 )
+
+HC21_PropulsionPhase_Hip_AllJointsNegativeTorque_Period1 <- HC21_PropulsionPhase_Hip_AllJointsNegativeTorque %>% filter( Frames < 59 )
+
+
+
+
+
+
+
+HC21_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period2 <- HC21_PropulsionPhase_Ankle_AllJointsNegativeTorque %>% filter( Frames > 58  )
+
+HC21_PropulsionPhase_Knee_AllJointsNegativeTorque_Period2 <- HC21_PropulsionPhase_Knee_AllJointsNegativeTorque %>% filter( Frames > 58  )
+
+HC21_PropulsionPhase_Hip_AllJointsNegativeTorque_Period2 <- HC21_PropulsionPhase_Hip_AllJointsNegativeTorque %>% filter( Frames > 58  )
+
+
+
+
+
+```
+
+
+###### Positive Power Data Frame
+```{r Create Data Frame}
+
+
+
+
+HC21_PropulsionPhase <- HC21_TorquePowerData %>% filter( Frames >= HC21_TorquePowerData$TimeofMinL5S1VerticalPosition[1] )
+
+
+
+AnklePositive_PropulsionPhase <- HC21_PropulsionPhase$Frames[ which( HC21_PropulsionPhase$Joint_Power[ HC21_PropulsionPhase$Joint_ID == 'Ankle' ] > 0 ) ]
+
+KneePositive_PropulsionPhase <- HC21_PropulsionPhase$Frames[ which( HC21_PropulsionPhase$Joint_Power[ HC21_PropulsionPhase$Joint_ID == 'Knee' ] > 0 ) ]
+
+HipPositive_PropulsionPhase <- HC21_PropulsionPhase$Frames[ which( HC21_PropulsionPhase$Joint_Power[ HC21_PropulsionPhase$Joint_ID == 'Hip' ] > 0 ) ]
+
+
+
+
+
+KneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+for (j in 1 : length( HipPositive_PropulsionPhase )  ) {
+   
+   
+   KneeHipMatch <- KneePositive_PropulsionPhase[ KneePositive_PropulsionPhase == HipPositive_PropulsionPhase[ j ] ]
+   
+   if ( length( KneeHipMatch != 0 ) ) {
+      
+      
+      KneeHip_FrameMatch <- rbind( KneeHip_FrameMatch, HipPositive_PropulsionPhase[ j ] )
+      
+   }
+   
+}
+
+
+AnkleKneeHip_FrameMatch <- data.frame( Frame=double() )
+
+
+
+for (k in 1 : dim( KneeHip_FrameMatch )[ 1 ]  ) {
+   
+   
+   AnkleKneeHipMatch <- AnklePositive_PropulsionPhase[ AnklePositive_PropulsionPhase == KneeHip_FrameMatch[ k, 1 ] ]
+   
+   if ( length( AnkleKneeHipMatch != 0 ) ) {
+      
+      
+      AnkleKneeHip_FrameMatch <- rbind( AnkleKneeHip_FrameMatch, KneeHip_FrameMatch[ k, 1 ] )
+      
+   }
+   
+}
+
+
+
+
+for ( l in 1 : dim( AnkleKneeHip_FrameMatch )[ 1 ] ) {
+   
+   
+   
+   if ( l == 1 ) {
+      
+      
+      for ( m in 1 : 3 ) {
+      
+         Frame1 <- which( HC21_PropulsionPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+         
+         #Begin M For Loop
+         if ( m == 1 ) { 
+            
+            
+            HC21_PropulsionPhase_AllJointsPositivePower <- HC21_PropulsionPhase[ Frame1, ]
+            
+         } else { #Else statement for M
+               
+            
+            HC21_PropulsionPhase_AllJointsPositivePower <- rbind( HC21_PropulsionPhase_AllJointsPositivePower, HC21_PropulsionPhase[ Frame1, ] )
+            
+            }#End M If statement
+      
+      
+      }#End M For loop
+      
+      
+      
+   } else { #Else statement for L
+      
+   
+      
+         for ( m in 1 : 3 ) {
+      
+            Frame1 <- which( HC21_PropulsionPhase$Frames == AnkleKneeHip_FrameMatch[ l, ] )[ m ]
+            
+               
+            HC21_PropulsionPhase_AllJointsPositivePower <- rbind( HC21_PropulsionPhase_AllJointsPositivePower, HC21_PropulsionPhase[ Frame1, ] )
+            
+            }#End M Foor loop
+      
+      
+      }#End L If Statement
+   
+   
+}#End L For Loop
+
+
+
+```
+
+
+```{r Split Positive Power Into Each Joint}
+
+
+HC21_PropulsionPhase_Ankle_AllJointsPositivePower <- HC21_PropulsionPhase_AllJointsPositivePower %>% filter( Joint_ID == 'Ankle' )
+
+
+HC21_PropulsionPhase_Knee_AllJointsPositivePower <- HC21_PropulsionPhase_AllJointsPositivePower %>% filter( Joint_ID == 'Knee' )
+
+
+HC21_PropulsionPhase_Hip_AllJointsPositivePower <- HC21_PropulsionPhase_AllJointsPositivePower %>% filter( Joint_ID == 'Hip' )
+
+
+
+
+HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1 <- HC21_PropulsionPhase_Ankle_AllJointsPositivePower %>% filter( Frames < 52 )
+
+
+HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$AreaOfInterest <- 9
+
+
+HC21_PropulsionPhase_Knee_AllJointsPositivePower_Period1 <- HC21_PropulsionPhase_Knee_AllJointsPositivePower %>% filter( Frames < 52 )
+
+HC21_PropulsionPhase_Hip_AllJointsPositivePower_Period1 <- HC21_PropulsionPhase_Hip_AllJointsPositivePower %>% filter( Frames < 52 )
+
+
+
+
+
+
+
+HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2 <- HC21_PropulsionPhase_Ankle_AllJointsPositivePower %>% filter( Frames > 51  )
+
+
+HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$AreaOfInterest <- 9
+
+HC21_PropulsionPhase_Knee_AllJointsPositivePower_Period2 <- HC21_PropulsionPhase_Knee_AllJointsPositivePower %>% filter( Frames > 51  )
+
+HC21_PropulsionPhase_Hip_AllJointsPositivePower_Period2 <- HC21_PropulsionPhase_Hip_AllJointsPositivePower %>% filter( Frames > 51  )
+
+```
+
+
+
+
+
+## Plots
+
+
+```{r Hip Opposite Power}
+
+(HipOppositePowerPlot <- ggplot(data = HipOppositePower,aes(x,y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',linewidth=1,linetype='dashed')+      
+    
+      geom_vline( xintercept = HipOppositePower$FrameofMinL5S1/250, linewidth = 1.5 )+
+
+#### Cohort Data    
+          
+    geom_area( data = HipOppositePower_AnkleBraking, aes( x = Time_s, y = Power_TimeSeries, fill = 'Ankle' )   ) +
+  
+  geom_area( data = HipOppositePower_KneeBraking, aes( x = Time_s, y = Power_TimeSeries, fill = 'Knee' )   ) +
+  
+  
+  geom_area( data = HipOppositePower_HipBraking, aes( x = Time_s, y = Power_TimeSeries, fill = 'Hip' )   ) +
+  
+  
+  
+      geom_area( data = HipOppositePower_AnklePropulsion, aes( x = Time_s, y = Power_TimeSeries, fill = 'Ankle' )   ) +
+  
+  geom_area( data = HipOppositePower_KneePropulsion, aes( x = Time_s, y = Power_TimeSeries, fill = 'Knee' )   ) +
+  
+  
+  geom_area( data = HipOppositePower_HipPropulsion, aes( x = Time_s, y = Power_TimeSeries, fill = 'Hip' )   ) +
+  
+
+    geom_line( aes(x = Time_s,
+      y = Power_TimeSeries, group = Joint_ID,
+      color= Joint_ID, linetype = Joint_ID ),
+      na.rm=FALSE,size=3) +
+        
+  
+
+  
+  
+  geom_text( label = 'Ankle', size = 10, aes( x = 0.21, y = 5), color = 'white'  )+
+  
+  geom_text( label = 'Knee', size = 10, aes( x = 0.21, y = 2), color = 'white'  )+
+  
+  geom_text( label = 'Hip', size = 10, aes( x = 0.21, y = -0.3), color = 'white'  )+
+  
+  
+  geom_text( label = 'Min L5-S1 Vertical Position', size = 10, aes( x = 0.25, y = 7.4)  )+
+  
+      #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    geom_segment( aes(x = 0.17,
+                            y=7.4,
+                            xend = FrameofMinL5S1/250 + 0.005,
+                            yend = 7.4), color='black',
+                     ,na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  
+          
+          
+      scale_color_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe') ,
+                         name = 'Joint ID',aesthetics=c('color','fill'),labels=c('Ankle','Knee','Hip') ) +
+    
+
+            
+    scale_y_continuous( breaks=seq(-7,7,by=1),limits=c(-7,7.5) )+
+          
+     scale_x_continuous(breaks=seq( 0, 0.35, by = 0.05),limits=c(0,0.35) )+     
+
+
+    
+    labs(title='',x='Time (s)',y='Power (W/kg) [ - = Absorption, + = Generation ]' ) +
+    
+    guides(fill='none',linetype='none',color='none' )+
+
+    theme(plot.title = element_text(size = 35,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 35,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 35,face = 'bold.italic'),,axis.title.y.right = element_text(size = 35,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 32,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=32,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 35,face = 'bold.italic'),
+                legend.position = 'top', legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),plot.margin = margin(5,3,3,3),legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+### Unrectified Power
+
+
+#### HC20
+```{r All Joints Power - Neutralization}
+
+#Create new data frame - will neutralize power generation in braking phase and power absorption in propulsion phase
+HC20_TorquePowerData_PowerNeutralized <- HC20_TorquePowerData
+
+#Neutralize power generation in braking phase
+HC20_TorquePowerData_PowerNeutralized$Joint_Power[ which( HC20_TorquePowerData_PowerNeutralized$Time_sec <= HC20_TorquePowerData_PowerNeutralized$TimeofMinL5S1VerticalPosition/250 & HC20_TorquePowerData_PowerNeutralized$Joint_Power>0 ) ] <- 0
+
+#Neutralize power absorption in propulsion phase
+HC20_TorquePowerData_PowerNeutralized$Joint_Power[ which( HC20_TorquePowerData_PowerNeutralized$Time_sec > HC20_TorquePowerData_PowerNeutralized$TimeofMinL5S1VerticalPosition/250 & HC20_TorquePowerData_PowerNeutralized$Joint_Power<0 ) ] <- 0
+
+
+
+
+#Create new data frame to hold ankle power - neutralize generation in braking phase, absorption in generation phase
+HC20_BrakingPhase_Ankle$Joint_Power_Neutralized <- HC20_BrakingPhase_Ankle$Joint_Power
+
+#Neutralize generation in braking phase,
+HC20_BrakingPhase_Ankle$Joint_Power_Neutralized[ which( HC20_BrakingPhase_Ankle$Time_sec <= HC20_BrakingPhase_Ankle$TimeofMinL5S1VerticalPosition/250 & HC20_BrakingPhase_Ankle$Joint_Power>0 ) ] <- 0
+
+#Neutralize absorption in generation phase,
+HC20_BrakingPhase_Ankle$Joint_Power_Neutralized[ which( HC20_BrakingPhase_Ankle$Time_sec > HC20_BrakingPhase_Ankle$TimeofMinL5S1VerticalPosition/250 & HC20_BrakingPhase_Ankle$Joint_Power < 0 ) ] <- 0
+
+
+
+
+
+
+#Create new data frame to hold Knee power - neutralize generation in braking phase, absorption in generation phase
+HC20_BrakingPhase_Knee$Joint_Power_Neutralized <- HC20_BrakingPhase_Knee$Joint_Power
+
+#Neutralize generation in braking phase,
+HC20_BrakingPhase_Knee$Joint_Power_Neutralized[ which( HC20_BrakingPhase_Knee$Time_sec <= HC20_BrakingPhase_Knee$TimeofMinL5S1VerticalPosition/250 & HC20_BrakingPhase_Knee$Joint_Power>0 ) ] <- 0
+
+#Neutralize absorption in generation phase,
+HC20_BrakingPhase_Knee$Joint_Power_Neutralized[ which( HC20_BrakingPhase_Knee$Time_sec > HC20_BrakingPhase_Knee$TimeofMinL5S1VerticalPosition/250 & HC20_BrakingPhase_Knee$Joint_Power < 0 ) ] <- 0
+
+
+
+
+
+#Create new data frame to hold Hip power - neutralize generation in braking phase, absorption in generation phase
+HC20_BrakingPhase_Hip$Joint_Power_Neutralized <- HC20_BrakingPhase_Hip$Joint_Power
+
+#Neutralize generation in braking phase,
+HC20_BrakingPhase_Hip$Joint_Power_Neutralized[ which( HC20_BrakingPhase_Hip$Time_sec <= HC20_BrakingPhase_Hip$TimeofMinL5S1VerticalPosition/250 & HC20_BrakingPhase_Hip$Joint_Power>0 ) ] <- 0
+
+#Neutralize absorption in generation phase,
+HC20_BrakingPhase_Hip$Joint_Power_Neutralized[ which( HC20_BrakingPhase_Hip$Time_sec > HC20_BrakingPhase_Hip$TimeofMinL5S1VerticalPosition/250 & HC20_BrakingPhase_Hip$Joint_Power < 0 ) ] <- 0
+
+
+
+
+
+#Create new data frame to hold ankle power - neutralize generation in braking phase, absorption in generation phase
+HC20_PropulsionPhase_Ankle$Joint_Power_Neutralized <- HC20_PropulsionPhase_Ankle$Joint_Power
+
+#Neutralize generation in Propulsion phase,
+HC20_PropulsionPhase_Ankle$Joint_Power_Neutralized[ which( HC20_PropulsionPhase_Ankle$Time_sec <= HC20_PropulsionPhase_Ankle$TimeofMinL5S1VerticalPosition/250 & HC20_PropulsionPhase_Ankle$Joint_Power>0 ) ] <- 0
+
+#Neutralize absorption in generation phase,
+HC20_PropulsionPhase_Ankle$Joint_Power_Neutralized[ which( HC20_PropulsionPhase_Ankle$Time_sec > HC20_PropulsionPhase_Ankle$TimeofMinL5S1VerticalPosition/250 & HC20_PropulsionPhase_Ankle$Joint_Power < 0 ) ] <- 0
+
+
+
+
+
+
+#Create new data frame to hold Knee power - neutralize generation in Propulsion phase, absorption in generation phase
+HC20_PropulsionPhase_Knee$Joint_Power_Neutralized <- HC20_PropulsionPhase_Knee$Joint_Power
+
+#Neutralize generation in Propulsion phase,
+HC20_PropulsionPhase_Knee$Joint_Power_Neutralized[ which( HC20_PropulsionPhase_Knee$Time_sec <= HC20_PropulsionPhase_Knee$TimeofMinL5S1VerticalPosition/250 & HC20_PropulsionPhase_Knee$Joint_Power>0 ) ] <- 0
+
+#Neutralize absorption in generation phase,
+HC20_PropulsionPhase_Knee$Joint_Power_Neutralized[ which( HC20_PropulsionPhase_Knee$Time_sec > HC20_PropulsionPhase_Knee$TimeofMinL5S1VerticalPosition/250 & HC20_PropulsionPhase_Knee$Joint_Power < 0 ) ] <- 0
+
+
+
+
+
+#Create new data frame to hold Hip power - neutralize generation in Propulsion phase, absorption in generation phase
+HC20_PropulsionPhase_Hip$Joint_Power_Neutralized <- HC20_PropulsionPhase_Hip$Joint_Power
+
+#Neutralize generation in Propulsion phase,
+HC20_PropulsionPhase_Hip$Joint_Power_Neutralized[ which( HC20_PropulsionPhase_Hip$Time_sec <= HC20_PropulsionPhase_Hip$TimeofMinL5S1VerticalPosition/250 & HC20_PropulsionPhase_Hip$Joint_Power>0 ) ] <- 0
+
+#Neutralize absorption in generation phase,
+HC20_PropulsionPhase_Hip$Joint_Power_Neutralized[ which( HC20_PropulsionPhase_Hip$Time_sec > HC20_PropulsionPhase_Hip$TimeofMinL5S1VerticalPosition/250 & HC20_PropulsionPhase_Hip$Joint_Power < 0 ) ] <- 0
+
+
+
+
+
+
+
+
+(BAnklePower <- ggplot( data= HC20_TorquePowerData_PowerNeutralized, aes(x, y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',linewidth=1,linetype='dashed')+      
+    
+
+#### Cohort Data    
+          
+
+    geom_line( aes(x = Time_sec,
+      y = Joint_Power,
+      color= Joint_ID, group = Joint_ID ),na.rm=FALSE,inherit.aes=FALSE,linewidth=3) +
+          
+
+   
+   
+   
+      
+             geom_area( data = HC20_BrakingPhase_Ankle, aes( x = Time_sec,  y = Joint_Power_Neutralized, fill = Joint_ID, group = Joint_ID) ) +
+   
+          geom_area( data = HC20_BrakingPhase_Knee, aes( x = Time_sec,  y = Joint_Power_Neutralized, fill = Joint_ID, group = Joint_ID) ) +
+   
+   
+          geom_area( data = HC20_BrakingPhase_Hip, aes( x = Time_sec,  y = Joint_Power_Neutralized, fill = Joint_ID, group = Joint_ID) ) +
+   
+   
+   
+   
+   
+          geom_area( data = HC20_PropulsionPhase_Ankle, aes( x = Time_sec,  y = Joint_Power_Neutralized, fill = Joint_ID, group = Joint_ID) ) +
+   
+          geom_area( data = HC20_PropulsionPhase_Knee, aes( x = Time_sec,  y = Joint_Power_Neutralized, fill = Joint_ID, group = Joint_ID) ) +
+   
+
+          geom_area( data = HC20_PropulsionPhase_Hip, aes( x = Time_sec,  y = Joint_Power_Neutralized, fill = Joint_ID, group = Joint_ID) ) +
+   
+   
+   
+          # geom_area( data = HC20_TorquePowerData, aes( x = TimeVector,  y = Ankle_Power, fill = 'darkred') ) +
+          # 
+          # geom_area( data = HC20_TorquePowerData, aes( x = TimeVector,  y = Ankle_Power, fill = 'purple4') ) +
+          # 
+   
+  geom_vline( xintercept = HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1]/250, linewidth = 1.5 )+
+  
+  
+  geom_text( label = 'Begin Propulsion Phase', size = 14, aes( x = 0.285, y = -1.5), fontface = 'bold'  )+
+  
+
+      #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    geom_segment( aes(x = TimeofMinL5S1VerticalPosition[1]/250 + 0.042,
+                      
+                            y=-1.5,
+                            xend = TimeofMinL5S1VerticalPosition[1]/250 + 0.003,
+                      
+                            yend = -1.5), color='black',
+                     ,na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  
+   
+   
+##Add Joint Labels   
+  geom_text( label = 'Ankle', size = 17, aes( x = 0.105, y = -4), color = 'black', fontface = 'bold'  )+
+  geom_text( label = 'Knee', size = 17, aes( x = 0.105, y = -1.5), color = 'white', fontface = 'bold'  )+
+  geom_text( label = 'Hip', size = 17, aes( x = 0.06, y = 0.65, color = 'Hip'), fontface = 'bold'  )+
+   
+   
+      
+      
+            
+    scale_y_continuous( breaks=seq(-10,10,by=2),limits=c(-10,10) )+
+          
+     scale_x_continuous(breaks=seq(0,0.35,by = 0.05),limits=c( 0, 0.35) )+    
+
+
+    
+    labs(title='Joint Work = Integral of Joint Power',x='Time (sec)',y='Normalized Power (W/kg) [- = Absorption, + = Generation]' ) +
+    
+   
+    guides(fill='none',shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+      
+      
+   
+          
+                scale_color_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 'ATx07'=met.brewer('Renoir')[1], 
+                                              
+'ATx08' = met.brewer('Renoir')[2],
+                                          'ATx10'=met.brewer('Renoir')[3], 
+                                          'ATx12'=met.brewer('Renoir')[4],
+                                          'ATx17'=met.brewer('Renoir')[5],
+                                          'ATx18'=met.brewer('Renoir')[6],
+                                          'ATx19'=met.brewer('Renoir')[7],
+                                          'ATx21'=met.brewer('Renoir')[8],
+                                          'ATx24'=met.brewer('Renoir')[9],
+                                          'ATx25'=met.brewer('Renoir')[10],
+                                          'ATx27'=met.brewer('Renoir')[11],
+                                          'ATx34'=met.brewer('Renoir')[12] ) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34' ),
+                         name = 'Joint ID',aesthetics=c('color') ) +
+   
+   
+          
+scale_fill_manual(values = c('purple4' = 'purple4', 'darkred'='darkred', 'Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+
+   
+   
+    theme(plot.title = element_text(size = 46,hjust = 0.5,face = 'bold'),
+      plot.background  =  element_rect(fill=rgb(245, 245, 220, maxColorValue = 255)),
+                axis.title.x = element_text(size = 43,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 43,face = 'bold.italic'),
+          axis.title.y.right = element_text(size = 43,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 35,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=35,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 35,face = 'bold.italic'),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,3),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',size=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255) ),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey',linewidth = 0.1),
+      strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+
+
+ggsave(  path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Methods Illustrations', 'UnrectifiedPowerIntegration.png', width = 5600, height = 5600, units = 'px' )
+
+
+
+```
+
+
+
+```{r  Power - All Joints Same Direction}
+
+
+
+(BAnklePower <- ggplot( data= HC20_TorquePowerData, aes(x, y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',linewidth=1,linetype='dashed')+      
+    
+    
+    
+    
+    
+    
+    
+    geom_segment( aes( x = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ 1 ], xend = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ 1 ], y = 8, yend = -10 ), linewidth = 1, color = 'darkslategray' ) + 
+    
+    
+    geom_segment( aes( x = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec ) ],  xend = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec ) ], y = 8, yend = -10 ), linewidth = 1, color = 'darkslategray' ) +
+
+    
+    
+  
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ 1 ],  xend = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE,linewidth = 1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+
+
+    
+    
+    
+    
+    geom_segment( aes( x = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ 1 ], xend = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ 1 ], y = 8, yend = -10 ), linewidth = 1, color = 'darkslategray' ) +
+
+    geom_segment( aes( x = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec ) ], xend = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec ) ], y = 8, yend = -10 ), linewidth = 1, color = 'darkslategray' ) +
+
+
+
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ 1 ],  xend = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE,linewidth=1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+
+
+
+
+    geom_segment( aes( x = HC20_PropulsionPhase_Ankle_AllJointsPositivePower$Time_sec[ 1 ], xend = HC20_PropulsionPhase_Ankle_AllJointsPositivePower$Time_sec[ 1 ], y = 8, yend = -10 ), linewidth = 1, color = 'darkslategray' ) +
+
+    geom_segment( aes( x = HC20_PropulsionPhase_Ankle_AllJointsPositivePower$Time_sec[ length( HC20_PropulsionPhase_Ankle_AllJointsPositivePower$Time_sec ) ], xend = HC20_PropulsionPhase_Ankle_AllJointsPositivePower$Time_sec[ length( HC20_PropulsionPhase_Ankle_AllJointsPositivePower$Time_sec ) ], y = 8, yend = -10 ), linewidth = 1, color = 'darkslategray' ) +
+
+    
+    
+  
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC20_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec[ 1 ],  xend = HC20_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec[ length( HC20_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE, linewidth = 1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+    # 
+    
+    
+    
+    
+  
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC20_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec[ 1 ],  xend = HC20_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec[ length( HC20_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE, linewidth = 1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+    
+    
+    geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = AreaOfInterest1 ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = AreaOfInterest2 ), fill = 'darkgray' ) +
+    
+    
+    
+    geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = AreaOfInterest1 ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = AreaOfInterest2 ), fill = 'darkgray' ) +
+    
+    
+    
+    
+    
+    geom_area( data = HC20_PropulsionPhase_Ankle_AllJointsPositivePower, aes( x = Time_sec,  y = AreaOfInterest1 ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC20_PropulsionPhase_Ankle_AllJointsPositivePower, aes( x = Time_sec,  y = AreaOfInterest2 ), fill = 'darkgray' ) +
+    
+   
+    
+          
+
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Knee_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Knee_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Hip_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Hip_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Ankle_AllJointsPositivePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Ankle_AllJointsPositivePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Knee_AllJointsPositivePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Knee_AllJointsPositivePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Hip_AllJointsPositivePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Hip_AllJointsPositivePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+
+   
+
+   
+   
+    geom_line( aes(x = Time_sec,
+      y = Joint_Power,
+      color= Joint_ID, group = Joint_ID ),na.rm=FALSE,inherit.aes=FALSE,linewidth=3) +
+   
+  geom_vline( xintercept = HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1]/250, linewidth = 1.5 )+
+  
+  
+  geom_text( label = 'Begin Propulsion Phase', size = 10, aes( x = 0.2825, y = 9.5)  )+
+  
+      #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    geom_segment( aes(x = TimeofMinL5S1VerticalPosition[1]/250 + 0.042,
+                      
+                            y=9.5,
+                            xend = TimeofMinL5S1VerticalPosition[1]/250 + 0.003,
+                      
+                            yend = 9.5), color='black',
+                     ,na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  
+   
+   
+##Add Joint Labels   
+  geom_text( label = 'Ankle', size = 9.5, aes( x = 0.0995, y = -7.65, color = 'Ankle')  )+
+  geom_text( label = 'Knee', size = 10, aes( x = 0.0975, y = -3.7, color = 'Knee')  )+
+  geom_text( label = 'Hip', size = 10, aes( x = 0.0975, y = 0.65, color = 'Hip')  )+
+   
+   
+    scale_y_continuous( breaks=seq(-10,10,by=2),limits=c(-10,10) )+
+          
+     scale_x_continuous(breaks=seq(0,0.35,by = 0.05),limits=c( 0, 0.35) )+    
+
+
+    
+    labs(title='Joint Power Time Series \n All Joints Absorb/Generate Energy Together',x='Time (sec)',y='Normalized Power (J/kg)' ) +
+   
+   
+          
+                scale_color_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 'ATx07'=met.brewer('Renoir')[1], 
+                                              
+'ATx08' = met.brewer('Renoir')[2],
+                                          'ATx10'=met.brewer('Renoir')[3], 
+                                          'ATx12'=met.brewer('Renoir')[4],
+                                          'ATx17'=met.brewer('Renoir')[5],
+                                          'ATx18'=met.brewer('Renoir')[6],
+                                          'ATx19'=met.brewer('Renoir')[7],
+                                          'ATx21'=met.brewer('Renoir')[8],
+                                          'ATx24'=met.brewer('Renoir')[9],
+                                          'ATx25'=met.brewer('Renoir')[10],
+                                          'ATx27'=met.brewer('Renoir')[11],
+                                          'ATx34'=met.brewer('Renoir')[12] ) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34' ),
+                         name = 'Joint ID',aesthetics=c('color') ) +
+   
+   
+          
+scale_fill_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 
+                             'purple4' = 'purple4', 'darkred'='darkred'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Ankle', 'Knee', 'Hip', 'Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+            
+    
+    guides(fill='none',shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+
+    theme(plot.title = element_text(size = 35,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 35,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 35,face = 'bold.italic'),
+          axis.title.y.right = element_text(size = 35,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 32,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=32,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 32,face = 'bold.italic'),
+      axis.ticks = element_line(linewidth=5),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,3),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),
+      legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',linewidth=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+
+```{r  Power - All Joints Same Direction}
+
+
+
+(BAnklePower <- ggplot( data= HC21_TorquePowerData, aes(x, y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',linewidth=1,linetype='dashed')+      
+    
+    
+    
+    
+    
+    
+    
+    geom_segment( aes( x = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ 1 ], xend = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ 1 ], y = 9, yend = -9 ), linewidth = 1, color = 'darkslategray' ) + 
+    
+    
+    geom_segment( aes( x = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ length( HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec ) ],  xend = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ length( HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec ) ], y = 9, yend = -9 ), linewidth = 1, color = 'darkslategray' ) +
+
+    
+    
+  
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ 1 ],  xend = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec[ length( HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE,linewidth = 1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+
+
+    
+    
+    
+    
+    geom_segment( aes( x = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ 1 ], xend = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ 1 ], y = 9, yend = -9 ), linewidth = 1, color = 'darkslategray' ) +
+
+    geom_segment( aes( x = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ length( HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec ) ], xend = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ length( HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec ) ], y = 9, yend = -9 ), linewidth = 1, color = 'darkslategray' ) +
+
+
+
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ 1 ],  xend = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec[ length( HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE,linewidth=1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+
+
+
+
+    geom_segment( aes( x = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec[ 1 ], xend = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec[ 1 ], y = 9, yend = -9 ), linewidth = 1, color = 'darkslategray' ) +
+
+    geom_segment( aes( x = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec[ length( HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec ) ], xend = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec[ length( HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec ) ], y = 9, yend = -9 ), linewidth = 1, color = 'darkslategray' ) +
+
+    
+    
+  
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec[ 1 ],  xend = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec[ length( HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE, linewidth = 1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+    # 
+    
+    
+    
+    
+    
+
+
+    geom_segment( aes( x = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec[ 1 ], xend = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec[ 1 ], y = 9, yend = -9 ), linewidth = 1, color = 'darkslategray' ) +
+
+    geom_segment( aes( x = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec[ length( HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec ) ], xend = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec[ length( HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec ) ], y = 9, yend = -9 ), linewidth = 1, color = 'darkslategray' ) +
+
+    
+    
+  
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec[ 1 ],  xend = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec[ length( HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE, linewidth = 1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+    
+    
+    geom_area( data = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = AreaOfInterest ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = AreaOfInterest*(-1) ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = AreaOfInterest ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = AreaOfInterest*(-1) ), fill = 'darkgray' ) +
+    
+    
+    
+    
+    
+    geom_area( data = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1, aes( x = Time_sec,  y = AreaOfInterest ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1, aes( x = Time_sec,  y = AreaOfInterest*(-1) ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2, aes( x = Time_sec,  y = AreaOfInterest ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2, aes( x = Time_sec,  y = AreaOfInterest*(-1) ), fill = 'darkgray' ) +
+
+    
+          
+
+          # 
+          # 
+          # geom_area( data = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC21_BrakingPhase_Ankle_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC21_BrakingPhase_Knee_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC21_BrakingPhase_Knee_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC21_BrakingPhase_Hip_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC21_BrakingPhase_Hip_AllJointsNegativePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # geom_area( data = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC21_PropulsionPhase_Ankle_AllJointsPositivePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC21_PropulsionPhase_Knee_AllJointsPositivePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC21_PropulsionPhase_Knee_AllJointsPositivePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC21_PropulsionPhase_Hip_AllJointsPositivePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC21_PropulsionPhase_Hip_AllJointsPositivePower_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+
+   
+
+   
+   
+    geom_line( aes(x = Time_sec,
+      y = Joint_Power,
+      color= Joint_ID, group = Joint_ID ),na.rm=FALSE,inherit.aes=FALSE,linewidth=3) +
+   
+  geom_vline( xintercept = HC21_TorquePowerData$TimeofMinL5S1VerticalPosition[1]/250, linewidth = 1.5 )+
+  
+  
+  geom_text( label = 'Begin Propulsion Phase', size = 10, aes( x = 0.28, y = 10.5)  )+
+  
+      #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    geom_segment( aes(x = TimeofMinL5S1VerticalPosition[1]/250 + 0.042,
+                      
+                            y=10.5,
+                            xend = TimeofMinL5S1VerticalPosition[1]/250 + 0.001,
+                      
+                            yend = 10.5), color='black',
+                     ,na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  
+   
+   
+##Add Joint Labels   
+  geom_text( label = 'Ankle', size = 10, aes( x = 0.08, y = -7.65, color = 'Ankle')  )+
+  geom_text( label = 'Knee', size = 10, aes( x = 0.125, y = -6.65, color = 'Knee')  )+
+  geom_text( label = 'Hip', size = 10, aes( x = 0.095, y = -1.5, color = 'Hip')  )+
+   
+   
+   
+          
+                scale_color_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 'ATx07'=met.brewer('Renoir')[1], 
+                                              
+'ATx08' = met.brewer('Renoir')[2],
+                                          'ATx10'=met.brewer('Renoir')[3], 
+                                          'ATx12'=met.brewer('Renoir')[4],
+                                          'ATx17'=met.brewer('Renoir')[5],
+                                          'ATx18'=met.brewer('Renoir')[6],
+                                          'ATx19'=met.brewer('Renoir')[7],
+                                          'ATx21'=met.brewer('Renoir')[8],
+                                          'ATx24'=met.brewer('Renoir')[9],
+                                          'ATx25'=met.brewer('Renoir')[10],
+                                          'ATx27'=met.brewer('Renoir')[11],
+                                          'ATx34'=met.brewer('Renoir')[12] ) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34' ),
+                         name = 'Joint ID',aesthetics=c('color') ) +
+   
+   
+          
+scale_fill_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 
+                             'purple4' = 'purple4', 'darkred'='darkred'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Ankle', 'Knee', 'Hip', 'Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+            
+    scale_y_continuous( breaks=seq(-12,12,by=2),limits=c(-12,12) )+
+          
+     scale_x_continuous(breaks=seq(0,0.35,by = 0.05),limits=c( 0, 0.35) )+     
+
+
+    
+    labs(title='Joint Power Time Series \n All Joints Absorb/Return Energy Together',x='Time (sec)',y='Normalized Power (J/kg)' ) +
+    
+    guides(fill='none',shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+
+    theme(plot.title = element_text(size = 35,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 35,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 35,face = 'bold.italic'),
+          axis.title.y.right = element_text(size = 35,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 32,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=32,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 32,face = 'bold.italic'),
+      axis.ticks = element_line(size=5),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,3),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',size=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+
+### Rectified Power
+
+#### HC01
+
+```{r Ankle Spring Functional Index}
+
+
+TimeVector = seq(1,length(HC01_PowerData$AnklePower),by=1)/300
+
+
+(BAnklePower <- ggplot(data=HC01_PowerData,aes(x,y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',size=1,linetype='dashed')+      
+    
+
+#### Cohort Data    
+          
+
+    geom_line( aes(x = TimeVector,
+      y = AnklePower,
+      group=Participant_ID,
+      color='#276419'),na.rm=FALSE,inherit.aes=FALSE,size=3) +
+          
+
+          # geom_area( data = HC01_PowerData_PositivePower, aes( x = TimeVector,  y = KneePower, fill = 'darkred') ) +
+          # 
+          # geom_area( data = HC01_PowerData_NegativePower, aes( x = TimeVector,  y = KneePower, fill = 'purple4') ) +
+          
+          
+scale_color_manual(values = c('#276419' = '#276419','#40004b','#8073ac','darkred'='darkred', 'purple4' = 'purple4'),
+      name = 'Joint ID',aesthetics=c('color'),labels=c('Ankle','Knee','Hip','vGRF') ) +
+          
+scale_fill_manual(values = c('purple4' = 'purple4', 'darkred'='darkred'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+            
+    scale_y_continuous( breaks=seq(-12,12,by=2),limits=c(-12,12) )+
+          
+     scale_x_continuous(breaks=c(0,0.1,0.2,0.3,0.4,0.5),limits=c(0,max(TimeVector)+0.05) )+     
+
+
+    
+    labs(title='Ankle Power',x='',y='Power (J/kg)' ) +
+    
+    guides(fill=guide_legend(aes=c('fill'),title='Phase ID'),shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+
+    theme(plot.title = element_text(size = 30,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 25,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 25,face = 'bold.italic'),,axis.title.y.right = element_text(size = 25,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 23.5,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=23.5,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 0,face = 'bold.italic'),axis.ticks.x = element_line(size=0),
+                legend.position = 'top', legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),plot.margin = margin(5,3,3,3),legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+
+#### HC20
+```{r  Power }
+
+
+
+(BAnklePower <- ggplot( data= HC20_TorquePowerData, aes(x, y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',linewidth=1,linetype='dashed')+      
+    
+#### Cohort Data    
+          
+
+   
+       geom_line( aes(x = Time_sec,
+      y = abs( Joint_Power ),
+      color= Joint_ID, group = Joint_ID ),na.rm=FALSE,inherit.aes=FALSE,linewidth=3) +
+   
+   
+   
+   
+   
+          geom_area( data = HC20_BrakingPhase_Ankle, aes( x = Time_sec,  y = abs(Joint_Power), fill = Joint_ID, group = Joint_ID) ) +
+   
+          geom_area( data = HC20_BrakingPhase_Knee, aes( x = Time_sec,  y = abs( Joint_Power ), fill = Joint_ID, group = Joint_ID) ) +
+   
+   
+          geom_area( data = HC20_BrakingPhase_Hip, aes( x = Time_sec,  y = abs( Joint_Power ), fill = Joint_ID, group = Joint_ID) ) +
+   
+   
+   
+   
+   
+          geom_area( data = HC20_PropulsionPhase_Ankle, aes( x = Time_sec,  y = abs(Joint_Power), fill = Joint_ID, group = Joint_ID) ) +
+   
+          geom_area( data = HC20_PropulsionPhase_Knee, aes( x = Time_sec,  y = abs( Joint_Power ), fill = Joint_ID, group = Joint_ID) ) +
+   
+
+          geom_area( data = HC20_PropulsionPhase_Hip, aes( x = Time_sec,  y = abs( Joint_Power ), fill = Joint_ID, group = Joint_ID) ) +
+   
+   
+
+   
+   
+          # geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativePower_Period1, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+
+   
+   
+
+   
+  geom_vline( xintercept = HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1]/250, linewidth = 1.5 )+
+  
+  
+  geom_text( label = 'Begin Propulsion Phase', size = 10, aes( x = 0.28, y = 10.5)  )+
+  
+      #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    geom_segment( aes(x = TimeofMinL5S1VerticalPosition[1]/250 + 0.042,
+                      
+                            y=10.5,
+                            xend = TimeofMinL5S1VerticalPosition[1]/250 + 0.001,
+                      
+                            yend = 10.5), color='black',
+                     ,na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  
+   
+   
+##Add Joint Labels   
+  geom_text( label = 'Ankle', size = 12, aes( x = 0.1, y = 4.5), color = 'white'  )+
+  geom_text( label = 'Knee', size = 12, aes( x = 0.115, y = 1.5), color = 'white'  )+
+  geom_text( label = 'Hip', size = 12, aes( x = 0.0575, y = -0.4, color = 'Hip')  )+
+   
+   
+   
+          
+                scale_color_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 'ATx07'=met.brewer('Renoir')[1], 
+                                              
+'ATx08' = met.brewer('Renoir')[2],
+                                          'ATx10'=met.brewer('Renoir')[3], 
+                                          'ATx12'=met.brewer('Renoir')[4],
+                                          'ATx17'=met.brewer('Renoir')[5],
+                                          'ATx18'=met.brewer('Renoir')[6],
+                                          'ATx19'=met.brewer('Renoir')[7],
+                                          'ATx21'=met.brewer('Renoir')[8],
+                                          'ATx24'=met.brewer('Renoir')[9],
+                                          'ATx25'=met.brewer('Renoir')[10],
+                                          'ATx27'=met.brewer('Renoir')[11],
+                                          'ATx34'=met.brewer('Renoir')[12] ) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34' ),
+                         name = 'Joint ID',aesthetics=c('color') ) +
+   
+   
+          
+scale_fill_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 
+                             'purple4' = 'purple4', 'darkred'='darkred'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Ankle', 'Knee', 'Hip', 'Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+            
+    scale_y_continuous( breaks=seq(-2,12,by=2),limits=c(-2,12) )+
+          
+     scale_x_continuous(breaks=seq(0,0.35,by = 0.05),limits=c( 0, 0.35) )+    
+
+
+    
+    labs(title='Rectified Joint Power Time Series',x='Time (sec)',y='Normalized Power (J/kg)' ) +
+    
+    guides(fill='none',shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+
+    theme(plot.title = element_text(size = 35,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 35,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 35,face = 'bold.italic'),
+          axis.title.y.right = element_text(size = 35,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 32,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=32,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 32,face = 'bold.italic'),
+      axis.ticks = element_line(size=5),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,3),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+
+
+### Unrectified Torque
+
+
+
+#### HC20
+```{r All Joints Torque}
+
+
+
+(BAnklePower <- ggplot( data= HC20_TorquePowerData, aes(x, y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',linewidth=1,linetype='dashed')+      
+    
+
+#### Cohort Data    
+          
+
+    geom_line( aes(x = Time_sec,
+      y = Joint_Torque,
+      color= Joint_ID, group = Joint_ID ),na.rm=FALSE,inherit.aes=FALSE,linewidth=3) +
+          
+
+          # geom_area( data = HC20_TorquePowerData, aes( x = TimeVector,  y = Ankle_Power, fill = 'darkred') ) +
+          # 
+          # geom_area( data = HC20_TorquePowerData, aes( x = TimeVector,  y = Ankle_Power, fill = 'purple4') ) +
+          # 
+   
+   
+  geom_vline( xintercept = HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1]/250, linewidth = 1.5 )+
+  
+   
+  geom_text( label = 'Begin Propulsion Phase', size = 10, aes( x = 0.284, y = 1.375)  )+
+   
+   
+      #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    geom_segment( aes(x = TimeofMinL5S1VerticalPosition[1]/250 + 0.042,
+                      
+                            y=1.375,
+                            xend = TimeofMinL5S1VerticalPosition[1]/250 + 0.001,
+                      
+                            yend = 1.375), color='black',
+                     ,na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  
+   
+   
+##Add Joint Labels   
+  geom_text( label = 'Ankle', size = 10, aes( x = 0.10575, y = -2.875, color = 'Ankle')  )+
+  geom_text( label = 'Knee', size = 10, aes( x = 0.1025, y = -0.875, color = 'Knee')  )+
+  geom_text( label = 'Hip', size = 10, aes( x = 0.106, y = -0.125, color = 'Hip')  )+
+   
+   
+   
+          
+                scale_color_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 'ATx07'=met.brewer('Renoir')[1], 
+                                              
+'ATx08' = met.brewer('Renoir')[2],
+                                          'ATx10'=met.brewer('Renoir')[3], 
+                                          'ATx12'=met.brewer('Renoir')[4],
+                                          'ATx17'=met.brewer('Renoir')[5],
+                                          'ATx18'=met.brewer('Renoir')[6],
+                                          'ATx19'=met.brewer('Renoir')[7],
+                                          'ATx21'=met.brewer('Renoir')[8],
+                                          'ATx24'=met.brewer('Renoir')[9],
+                                          'ATx25'=met.brewer('Renoir')[10],
+                                          'ATx27'=met.brewer('Renoir')[11],
+                                          'ATx34'=met.brewer('Renoir')[12] ) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34' ),
+                         name = 'Joint ID',aesthetics=c('color') ) +
+   
+   
+          
+scale_fill_manual(values = c('purple4' = 'purple4', 'darkred'='darkred'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+            
+    scale_y_continuous( breaks=seq(-4,1.5,by=0.5),limits=c(-4,1.5) )+
+          
+     scale_x_continuous(breaks=seq(0,0.35,by = 0.05),limits=c( 0, 0.35) )+    
+
+
+    
+    labs(title='Joint Torque Time Series',x='Time (sec)',y='Normalized Torque (N-m/kg)' ) +
+    
+    guides(fill=guide_legend(aes=c('fill'),title='Phase ID'),shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+
+    theme(plot.title = element_text(size = 35,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 35,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 35,face = 'bold.italic'),
+          axis.title.y.right = element_text(size = 35,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 32,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=32,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 32,face = 'bold.italic'),
+      axis.ticks = element_line(size=5),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,3),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+
+```{r Peak Support Moment}
+
+
+Ankle_TimeofPeakSupportMoment_BrakingPhase <- which( HC20_TorquePowerData$Frames == FrameofPeakSupportMoment_BrakingPhase )[ 1 ]
+
+Knee_TimeofPeakSupportMoment_BrakingPhase <- which( HC20_TorquePowerData$Frames == FrameofPeakSupportMoment_BrakingPhase )[ 2 ]
+
+Hip_TimeofPeakSupportMoment_BrakingPhase <- which( HC20_TorquePowerData$Frames == FrameofPeakSupportMoment_BrakingPhase )[ 3 ]
+
+
+
+Ankle_TimeofPeakSupportMoment_PropulsionPhase <- which( HC20_TorquePowerData$Frames == FrameofPeakSupportMoment_PropulsionPhase )[ 1 ]
+
+Knee_TimeofPeakSupportMoment_PropulsionPhase <- which( HC20_TorquePowerData$Frames == FrameofPeakSupportMoment_PropulsionPhase )[ 2 ]
+
+Hip_TimeofPeakSupportMoment_PropulsionPhase <- which( HC20_TorquePowerData$Frames == FrameofPeakSupportMoment_PropulsionPhase )[ 3 ]
+
+
+
+
+
+(BAnklePower <- ggplot( data= HC20_TorquePowerData, aes(x, y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',linewidth=1,linetype='dashed')+    
+    
+  geom_vline( xintercept = HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1]/250, linewidth = 1.5 )+
+    
+
+#### Cohort Data    
+          
+
+    geom_line( aes(x = Time_sec,
+      y = Joint_Torque,
+      color= Joint_ID, group = Joint_ID ),na.rm=FALSE,inherit.aes=FALSE,linewidth=3) +
+   
+   
+   
+   
+   geom_point( aes( x = Time_sec[ Ankle_TimeofPeakSupportMoment_BrakingPhase ],
+      y = Joint_Torque[ Ankle_TimeofPeakSupportMoment_BrakingPhase ],
+      fill = 'Ankle', group = Joint_ID ), shape = 21, color = 'white', 
+      size = 10,
+      na.rm=FALSE,inherit.aes=FALSE,) +
+   
+   
+   geom_point( aes( x = Time_sec[ Knee_TimeofPeakSupportMoment_BrakingPhase ],
+      y = Joint_Torque[ Knee_TimeofPeakSupportMoment_BrakingPhase ],
+      fill = 'Knee', group = Joint_ID ), shape = 21, color = 'white', 
+      size = 10,
+      na.rm=FALSE,inherit.aes=FALSE,) +
+   
+   
+   geom_point( aes( x = Time_sec[ Hip_TimeofPeakSupportMoment_BrakingPhase ],
+      y = Joint_Torque[ Hip_TimeofPeakSupportMoment_BrakingPhase ],
+      fill = 'Hip', group = Joint_ID ), shape = 21, color = 'white', 
+      size = 10,
+      na.rm=FALSE,inherit.aes=FALSE,) +
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   geom_point( aes( x = Time_sec[ Ankle_TimeofPeakSupportMoment_PropulsionPhase ],
+      y = Joint_Torque[ Ankle_TimeofPeakSupportMoment_PropulsionPhase ],
+      fill = 'Ankle', group = Joint_ID ), shape = 21, color = 'white', 
+      size = 10,
+      na.rm=FALSE,inherit.aes=FALSE,) +
+   
+   
+   geom_point( aes( x = Time_sec[ Knee_TimeofPeakSupportMoment_PropulsionPhase ],
+      y = Joint_Torque[ Knee_TimeofPeakSupportMoment_PropulsionPhase ],
+      fill = 'Knee', group = Joint_ID ), shape = 21, color = 'white', 
+      size = 10,
+      na.rm=FALSE,inherit.aes=FALSE,) +
+   
+   
+   geom_point( aes( x = Time_sec[ Hip_TimeofPeakSupportMoment_PropulsionPhase ],
+      y = Joint_Torque[ Hip_TimeofPeakSupportMoment_PropulsionPhase ],
+      fill = 'Hip', group = Joint_ID ), shape = 21, color = 'white', 
+      size = 10,
+      na.rm=FALSE,inherit.aes=FALSE,) +
+          
+
+   
+          # geom_area( data = HC20_TorquePowerData, aes( x = TimeVector,  y = Ankle_Power, fill = 'darkred') ) +
+          # 
+          # geom_area( data = HC20_TorquePowerData, aes( x = TimeVector,  y = Ankle_Power, fill = 'purple4') ) +
+          # 
+   
+   
+  
+   
+  geom_text( label = 'Begin Propulsion Phase', size = 10, aes( x = 0.284, y = 1.375)  )+
+   
+   
+      #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    geom_segment( aes(x = TimeofMinL5S1VerticalPosition[1]/250 + 0.042,
+                      
+                            y=1.375,
+                            xend = TimeofMinL5S1VerticalPosition[1]/250 + 0.001,
+                      
+                            yend = 1.375), color='black',
+                     ,na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  
+   
+   
+##Add Joint Labels   
+  geom_text( label = 'Ankle', size = 10, aes( x = 0.10575, y = -2.875, color = 'Ankle')  )+
+  geom_text( label = 'Knee', size = 10, aes( x = 0.1025, y = -0.875, color = 'Knee')  )+
+  geom_text( label = 'Hip', size = 10, aes( x = 0.106, y = -0.125, color = 'Hip')  )+
+   
+   
+   
+          
+                scale_color_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 'ATx07'=met.brewer('Renoir')[1], 
+                                              
+'ATx08' = met.brewer('Renoir')[2],
+                                          'ATx10'=met.brewer('Renoir')[3], 
+                                          'ATx12'=met.brewer('Renoir')[4],
+                                          'ATx17'=met.brewer('Renoir')[5],
+                                          'ATx18'=met.brewer('Renoir')[6],
+                                          'ATx19'=met.brewer('Renoir')[7],
+                                          'ATx21'=met.brewer('Renoir')[8],
+                                          'ATx24'=met.brewer('Renoir')[9],
+                                          'ATx25'=met.brewer('Renoir')[10],
+                                          'ATx27'=met.brewer('Renoir')[11],
+                                          'ATx34'=met.brewer('Renoir')[12] ) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34' ),
+                         name = 'Joint ID',aesthetics=c('color') ) +
+   
+   
+          
+scale_fill_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe',
+                             'purple4' = 'purple4', 'darkred'='darkred'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Ankle', 'Knee', 'Hip', 'Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+            
+    scale_y_continuous( breaks=seq(-4,1.5,by=0.5),limits=c(-4,1.5) )+
+          
+     scale_x_continuous(breaks=seq(0,0.35,by = 0.05),limits=c( 0, 0.35) )+    
+
+
+    
+    labs(title='Joint Torque Time Series',x='Time (sec)',y='Normalized Torque (N-m/kg)' ) +
+    
+    guides(fill='none',shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+
+    theme(plot.title = element_text(size = 35,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 35,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 35,face = 'bold.italic'),
+          axis.title.y.right = element_text(size = 35,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 32,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=32,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 32,face = 'bold.italic'),
+      axis.ticks = element_line(size=5),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,3),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+```{r  Torque - All Joints Same Direction}
+
+
+
+(BAnklePower <- ggplot( data= HC20_TorquePowerData, aes(x, y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',linewidth=1,linetype='dashed')+      
+    
+    
+    
+    
+    
+    
+    
+    geom_segment( aes( x = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec[ 1 ], xend = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec[ 1 ], y = 0.5, yend = -3.3 ), linewidth = 1, color = 'darkslategray' ) + 
+    
+    
+    geom_segment( aes( x = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec ) ],  xend = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec ) ], y = 0.5, yend = -3.3 ), linewidth = 1, color = 'darkslategray' ) +
+
+    
+    
+  
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec[ 1 ],  xend = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE,linewidth = 1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+
+
+    
+    
+    
+    
+    geom_segment( aes( x = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec[ 1 ], xend = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec[ 1 ], y = 0.5, yend = -3.3 ), linewidth = 1, color = 'darkslategray' ) +
+
+    geom_segment( aes( x = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec ) ], xend = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec ) ], y = 0.5, yend = -3.3 ), linewidth = 1, color = 'darkslategray' ) +
+
+
+
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec[ 1 ],  xend = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec[ length( HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE,linewidth=1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+
+
+
+
+    geom_segment( aes( x = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$Time_sec[ 1 ], xend = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$Time_sec[ 1 ], y = 0.5, yend = -3.3 ), linewidth = 1, color = 'darkslategray' ) +
+
+    geom_segment( aes( x = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$Time_sec[ length( HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$Time_sec ) ], xend = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$Time_sec[ length( HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque$Time_sec ) ], y = 0.5, yend = -3.3 ), linewidth = 1, color = 'darkslategray' ) +
+
+    
+    
+  
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec[ 1 ],  xend = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec[ length( HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period1$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE, linewidth = 1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+    # 
+    
+    
+    
+
+    
+    
+  
+    #   #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    # geom_segment( aes(x = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec[ 1 ],  xend = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec[ length( HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period2$Time_sec ) ], y = 8, yend = 8 ) , color='black',
+    #                  ,na.rm=FALSE,inherit.aes=FALSE, linewidth = 1.25,
+    #               arrow=arrow(length=unit(0.25,'inches'), ends = 'both'), 
+    #               show.legend=FALSE) + 
+    
+    
+    geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1, aes( x = Time_sec,  y = AreaOfInterest2 ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1, aes( x = Time_sec,  y = AreaOfInterest1 ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2, aes( x = Time_sec,  y = AreaOfInterest2 ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2, aes( x = Time_sec,  y = AreaOfInterest1 ), fill = 'darkgray' ) +
+    
+    
+    
+    
+    
+    geom_area( data = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque, aes( x = Time_sec,  y = AreaOfInterest2 ), fill = 'darkgray' ) +
+    
+    
+    geom_area( data = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque, aes( x = Time_sec,  y = AreaOfInterest1 ), fill = 'darkgray' ) +
+    
+    
+    
+          
+
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period1, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Ankle_AllJointsNegativeTorque_Period2, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Knee_AllJointsNegativeTorque_Period1, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Knee_AllJointsNegativeTorque_Period2, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Hip_AllJointsNegativeTorque_Period1, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_BrakingPhase_Hip_AllJointsNegativeTorque_Period2, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period1, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Ankle_AllJointsNegativeTorque_Period2, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Knee_AllJointsNegativeTorque_Period1, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Knee_AllJointsNegativeTorque_Period2, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Hip_AllJointsNegativeTorque_Period1, aes( x = Time_sec,  y = Joint_Torque, fill = Joint_ID, group = Joint_ID) ) +
+          # 
+          # 
+          # geom_area( data = HC20_PropulsionPhase_Hip_AllJointsNegativeTorque_Period2, aes( x = Time_sec,  y = Joint_Power, fill = Joint_ID, group = Joint_ID) ) +
+
+   
+
+   
+   
+    geom_line( aes(x = Time_sec,
+      y = Joint_Torque,
+      color= Joint_ID, group = Joint_ID ),na.rm=FALSE,inherit.aes=FALSE,linewidth=3) +
+   
+  geom_vline( xintercept = HC20_TorquePowerData$TimeofMinL5S1VerticalPosition[1]/250, linewidth = 1.5 )+
+  
+   
+  geom_text( label = 'Begin Propulsion Phase', size = 10, aes( x = 0.284, y = 1.375)  )+
+   
+   
+      #Horizontal arrow to direct geom_text to vertical line separating absorption and generation phases
+    geom_segment( aes(x = TimeofMinL5S1VerticalPosition[1]/250 + 0.042,
+                      
+                            y=1.375,
+                            xend = TimeofMinL5S1VerticalPosition[1]/250 + 0.001,
+                      
+                            yend = 1.375), color='black',
+                     ,na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  
+   
+   
+##Add Joint Labels   
+  geom_text( label = 'Ankle', size = 9.5, aes( x = 0.0965, y = -2.625, color = 'Ankle')  )+
+  geom_text( label = 'Knee', size = 9.5, aes( x = 0.1015, y = -0.875, color = 'Knee')  )+
+  geom_text( label = 'Hip', size = 9.5, aes( x = 0.106, y = -0.125, color = 'Hip')  )+
+   
+   
+   
+          
+                scale_color_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 'ATx07'=met.brewer('Renoir')[1], 
+                                              
+'ATx08' = met.brewer('Renoir')[2],
+                                          'ATx10'=met.brewer('Renoir')[3], 
+                                          'ATx12'=met.brewer('Renoir')[4],
+                                          'ATx17'=met.brewer('Renoir')[5],
+                                          'ATx18'=met.brewer('Renoir')[6],
+                                          'ATx19'=met.brewer('Renoir')[7],
+                                          'ATx21'=met.brewer('Renoir')[8],
+                                          'ATx24'=met.brewer('Renoir')[9],
+                                          'ATx25'=met.brewer('Renoir')[10],
+                                          'ATx27'=met.brewer('Renoir')[11],
+                                          'ATx34'=met.brewer('Renoir')[12] ) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34' ),
+                         name = 'Joint ID',aesthetics=c('color') ) +
+   
+   
+          
+scale_fill_manual(values = c('Ankle' = '#ece7f2','Knee' = '#a6bddb','Hip' = '#2b8cbe', 
+                             'purple4' = 'purple4', 'darkred'='darkred'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Ankle', 'Knee', 'Hip', 'Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+            
+    scale_y_continuous( breaks=seq(-4,1.5,by=0.5),limits=c(-4,1.5) )+
+          
+     scale_x_continuous(breaks=seq(0,0.35,by = 0.05),limits=c( 0, 0.35) )+    
+
+
+    
+    labs(title='Joint Torque Time Series \n All Joints Show Extensor Torque',x='Time (sec)',y='Normalized Torque (N-m/kg)' ) +
+    
+   
+    guides(fill='none',shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+
+   
+   
+    theme(plot.title = element_text(size = 35,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 35,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 35,face = 'bold.italic'),
+                axis.text.y.left  =  element_text(size = 32,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=32,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 32,face = 'bold.italic'),
+      axis.ticks = element_line(size=5),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,3),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',size=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+
+### Segment Power
+
+```{r Segment Power Plot}
+
+
+(PlotSegmentPower <- ggplot( data= HC20_SegmentPowerData, aes(x, y) ) +
+    
+
+    #Create horizontal line at y = 0
+     geom_hline( yintercept = 0, color = '#000000', linewidth = 1, linetype = 'dashed')+
+    
+    
+          #Arrow segment from 0 to max of y-axis.
+   geom_segment( aes( x = 0.01, xend = 0.01, y = 0.1, yend = 10 ), linewidth = 2.5, arrow=arrow(length=unit(5,'mm'), ends = 'last', type = 'open', angle = 40 )  ) +
+      
+    #Create label for upward arrow
+      geom_text( label = 'Into Segment', size = 12, x = 0.05, y = 9.7, color = 'black', fontface = 'bold', family = 'Arial Bold' )+
+    
+      #Arrow segment from 0 to min of y-axis.
+   geom_segment( aes( x = 0.01, xend = 0.01, y = -0.1, yend = -12 ), linewidth = 2.5, arrow=arrow(length=unit(5,'mm'), ends = 'last', type = 'open', angle = 40 )  ) +
+      
+    #Create label for downward arrow
+      geom_text( label = 'From Segment', size = 12, x = 0.055, y = -11.7, color = 'black', fontface = 'bold', family = 'Arial Bold' )+
+    
+    
+   # #Plot segment power time series. Group data by segment - also set colors by segment
+   #  geom_line( aes(x = Time_s,
+   #    y = PowerTimeSeries,
+   #    color= Segment_ID, group = Segment_ID ),na.rm=FALSE,inherit.aes=FALSE,linewidth=3) +
+          
+
+   
+   
+   
+#Next 4 lines of code shade the area under the pelvis, thigh, shank, and foot braking phase curves      
+             geom_area( data = PelvisPower_BrakingPhase, aes( x = Time_s,  y = PowerTimeSeries, fill = Segment_ID, group = Segment_ID) ) +
+   
+          geom_area( data = ShankPower_BrakingPhase, aes( x = Time_s,  y = PowerTimeSeries, fill = Segment_ID, group = Segment_ID) ) +
+    
+             geom_area( data = ThighPower_BrakingPhase, aes( x = Time_s,  y = PowerTimeSeries, fill = Segment_ID, group = Segment_ID) ) +
+   
+          geom_area( data = FootPower_BrakingPhase, aes( x = Time_s,  y = PowerTimeSeries, fill = Segment_ID, group = Segment_ID) ) +
+   
+   
+   
+   
+#Next 4 lines of code shade the area under the pelvis, thigh, shank, and foot Propulsion phase curves      
+             geom_area( data = PelvisPower_PropulsionPhase, aes( x = Time_s,  y = PowerTimeSeries, fill = Segment_ID, group = Segment_ID) ) +
+   
+          geom_area( data = ShankPower_PropulsionPhase, aes( x = Time_s,  y = PowerTimeSeries, fill = Segment_ID, group = Segment_ID) ) +
+    
+             geom_area( data = ThighPower_PropulsionPhase, aes( x = Time_s,  y = PowerTimeSeries, fill = Segment_ID, group = Segment_ID) ) +
+   
+          geom_area( data = FootPower_PropulsionPhase, aes( x = Time_s,  y = PowerTimeSeries, fill = Segment_ID, group = Segment_ID) ) +
+   
+   
+
+   #Create a vertical line to signify the division between braking and propulsion phases
+  geom_vline( xintercept = HC20_SegmentPowerData$TimeofMinL5S1_s[1], linewidth = 1.5 )+
+  
+  #Label to indicate meaning of vertical line
+  geom_text( label = 'Begin Propulsion Phase', size = 14, aes( x = 0.265, y = 9.75), fontface = 'bold', family = 'Arial Bold'  )+
+  
+
+      #Horizontal arrow to direct geom_text to vertical line separating braking and propulsion phases
+    geom_segment( aes(x = 0.19,
+                            y = 9.75,
+                            xend = 0.17,
+                            yend = 9.75), color='black',
+                     na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  
+   
+   
+##Add Joint Labels   
+  geom_text( label = 'Pelvis', size = 17, aes( x = 0.10, y = -5), color = 'black', fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'Thigh', size = 17, aes( x = 0.205, y = -0.75), color = 'black', fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'Shank', size = 17, aes( x = 0.075, y = 2.25), color = '#b2abd2', fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'Foot', size = 17, aes( x = 0.09, y = -0.75), color = 'white', fontface = 'bold', family = 'Arial Bold'  )+
+   
+   
+      
+      
+            
+    scale_y_continuous( breaks=seq(-12,10,by=2),limits=c(-12,10) )+
+          
+     scale_x_continuous(breaks=seq(0,0.35,by = 0.05),limits=c( 0, 0.35) )+    
+
+
+    
+    labs(title='Segment Net Work = Segment Work Integral',x='Time (sec)',y='Normalized Power (W/kg) [- = Absorption, + = Generation]' ) +
+    
+   
+    guides(fill='none',shape=guide_legend(title='Segment ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+      
+      
+
+          
+                scale_color_manual(values = c('Foot' = '#5e3c99', 'Shank' = '#b2abd2', 'Thigh' = '#fdb863', 'Pelvis' = '#e66101'), aesthetics=c('color') ) +
+   
+   
+          
+scale_fill_manual(values = c('Foot' = '#5e3c99', 'Shank' = '#b2abd2', 'Thigh' = '#fdb863', 'Pelvis' = '#e66101'),
+      name = 'Phase ID',aesthetics=c('fill')  ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+
+   
+   
+    theme(plot.title = element_text(size = 46,hjust = 0.5,face = 'bold', family = 'Arial Bold' ),
+      plot.background  =  element_rect(fill=rgb(245, 245, 220, maxColorValue = 255)),
+                axis.title.x = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.title.y.left = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+          axis.title.y.right = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+      axis.text.y.right=element_text(size=35,color='darkred',face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.text.x  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,3),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',linewidth=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255) ),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey',linewidth = 0.1),
+      strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+
+
+ggsave(  path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Methods Illustrations', 'SegmentPowerTimeSeries_MethodsIllustration.png', width = 5600, height = 5600, units = 'px' )
+
+
+
+```
+
+
+
+
+### HP08 Ankle + Hip Torque
+```{r Torque}
+
+
+(BHP08_Torque <- ggplot(data=HP08_TorquePowerData,aes(x,y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',size=1,linetype='dashed')+      
+    
+    
+    
+
+#### Cohort Data    
+          
+
+    geom_line( aes(x = Time_sec,
+      y = Joint_Torque_Nm_per_kg,
+      color=factor(Hop_ID), group = factor(Hop_ID), linetype = factor(Hop_ID) ),na.rm=FALSE,inherit.aes=FALSE,size=1.5) +
+          
+
+
+          
+scale_color_manual(values = c('1' = met.brewer('Redon')[1],'2' = met.brewer('Redon')[2], '3' = met.brewer('Redon')[3], '4' = met.brewer('Redon')[4], '5' = met.brewer('Redon')[5], '6' = met.brewer('Redon')[6], '7' = met.brewer('Redon')[7], '8' = met.brewer('Redon')[8], '9' = met.brewer('Redon')[9], '10' = met.brewer('Redon')[10]),
+      name = 'Joint ID',aesthetics=c('color'),labels=c('Ankle','Knee','Hip','vGRF') ) +
+          
+
+
+            
+    scale_y_continuous( breaks=seq(-3.5,1,by=0.5),limits=c(-3.5,1) )+
+          
+     scale_x_continuous(breaks=seq(0,0.25,by=0.05),limits=c(0,0.25) )+     
+
+
+    
+    labs(title='Ankle and Hip Torque - HP08',x='Time (s)',y='Torque (N-m/kg) [ - = Extensor ]' ) +
+    
+  
+    guides(fill='none',color='none', linetype = 'none' )+
+
+  
+    theme(plot.title = element_text(size = 35,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 35,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 35,face = 'bold.italic'),,axis.title.y.right = element_text(size = 35,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 32,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=32,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 32,face = 'bold.italic'),
+                legend.position = 'top', legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),plot.margin = margin(5,3,3,3),legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) +
+  
+  facet_wrap( vars(Joint_ID), nrow = 2 )
+
+    
+    )
+
+```
+
+
+
+
+```{r Power}
+
+
+(BHP08_Power <- ggplot(data=HP08_TorquePowerData,aes(x,y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',size=1,linetype='dashed')+      
+    
+    
+    
+
+#### Cohort Data    
+          
+
+    geom_line( aes(x = Time_sec,
+      y = Joint_Power_W_per_kg,
+      color=factor(Hop_ID), group = factor(Hop_ID), linetype = factor(Hop_ID) ),na.rm=FALSE,inherit.aes=FALSE,size=1.5) +
+          
+
+
+          
+scale_color_manual(values = c('1' = met.brewer('Redon')[1],'2' = met.brewer('Redon')[2], '3' = met.brewer('Redon')[3], '4' = met.brewer('Redon')[4], '5' = met.brewer('Redon')[5], '6' = met.brewer('Redon')[6], '7' = met.brewer('Redon')[7], '8' = met.brewer('Redon')[8], '9' = met.brewer('Redon')[9], '10' = met.brewer('Redon')[10]),
+      name = 'Joint ID',aesthetics=c('color'),labels=c('Ankle','Knee','Hip','vGRF') ) +
+          
+
+
+            
+    scale_y_continuous( breaks=seq(-10,10,by=2.5),limits=c(-10,10) )+
+          
+     scale_x_continuous(breaks=seq(0,0.25,by=0.05),limits=c(0,0.25) )+     
+
+
+    
+    labs(title='Ankle and Hip Power - HP08',x='Time (s)',y='Power (N-m/kg) [ - = Absorption ]' ) +
+    
+  
+    guides(fill='none',color='none', linetype = 'none' )+
+
+  
+    theme(plot.title = element_text(size = 35,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 35,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 35,face = 'bold.italic'),,axis.title.y.right = element_text(size = 35,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 32,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=32,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 32,face = 'bold.italic'),
+                legend.position = 'top', legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),plot.margin = margin(5,3,3,3),legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) +
+  
+  facet_wrap( vars(Joint_ID), nrow = 2 )
+
+    
+    )
+
+```
+
+
+
+
+
+### Power + Rectified EMG
+```{r Ankle Power - No X-Axis}
+
+
+TimeVector = seq(1,length(HC01_PowerData$AnklePower),by=1)/300
+
+
+(BAnklePower <- ggplot(data=HC01_PowerData,aes(x,y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',size=1,linetype='dashed')+      
+    
+
+#### Cohort Data    
+          
+
+    geom_line( aes(x = TimeVector,
+      y = AnklePower,
+      group=Participant_ID,
+      color='#276419'),na.rm=FALSE,inherit.aes=FALSE,size=3) +
+          
+
+          geom_area( data = HC01_PowerData_PositivePower, aes( x = TimeVector,  y = AnklePower, fill = 'darkred') ) +
+          
+          geom_area( data = HC01_PowerData_NegativePower, aes( x = TimeVector,  y = AnklePower, fill = 'purple4') ) +
+          
+          
+scale_color_manual(values = c('#276419' = '#276419','#40004b','#8073ac','darkred'='darkred', 'purple4' = 'purple4'),
+      name = 'Joint ID',aesthetics=c('color'),labels=c('Ankle','Knee','Hip','vGRF') ) +
+          
+scale_fill_manual(values = c('purple4' = 'purple4', 'darkred'='darkred'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+            
+    scale_y_continuous( breaks=seq(-12,12,by=2),limits=c(-12,12) )+
+          
+     scale_x_continuous(breaks=c(0,0.1,0.2,0.3,0.4,0.5),limits=c(0,max(TimeVector)+0.05) )+     
+
+
+    
+    labs(title='Ankle Power',x='',y='Power (J/kg)' ) +
+    
+    guides(fill=guide_legend(aes=c('fill'),title='Phase ID'),shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+
+    theme(plot.title = element_text(size = 30,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 0,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 25,face = 'bold.italic'),,axis.title.y.right = element_text(size = 25,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 23.5,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=23.5,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 0,face = 'bold.italic'),axis.ticks.x = element_line(size=0),
+                legend.position = 'top', legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),plot.margin = margin(5,3,3,3),legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+
+```{r GasMed Rectified EMG}
+
+
+TimeVector = seq(1,length(HC01_PowerData$AnklePower),by=1)/300
+
+
+( FWRGasMed <- ggplot(data=HC01_PowerData,aes(x,y) ) +
+    
+
+      geom_area(aes(x = TimeVector, y=MedGastroc_Rectified,color='GasMed'),size=5,alpha=0.9,fill=rgb(173,216,231,maxColorValue = 255) )+
+    
+    
+    
+   #  geom_point( aes(color='GasMed'),size=7 )+
+   #  
+   #  geom_point( color ='white',size=3 )+
+   #  
+   # 
+   #  geom_line( aes(color='GasMed'),size=5 )+
+   #  
+   #  geom_line( color ='white',size=2 )+
+   #    
+   # geom_line( color ='black' )+
+      
+      
+      scale_color_manual(values =  c('GasMed'=met.brewer("Austria")[6],'white'='white') ) +
+
+
+            
+    scale_y_continuous( breaks=seq(0,350,by=50),limits=c(0,350) )+
+          
+     scale_x_continuous(breaks=c(0,0.1,0.2,0.3,0.4,0.5),limits=c(0,max(TimeVector)+0.05) )+     
+
+
+    
+    labs(title= 'Gas Med Rectified EMG', x='Time (s)', y = expression( paste( ' Activation (', mu, 'v) ', parse=TRUE ) ) ) +
+    
+    
+    guides(fill=guide_legend(aes=c('fill'),title='Phase ID'),shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+
+    theme(plot.title = element_text(size = 30,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 25,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 25,face = 'bold.italic'),,axis.title.y.right = element_text(size = 25,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 23.5,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=23.5,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 23.5,face = 'bold.italic'),axis.ticks.x = element_line(size=0),
+                legend.position = 'top', legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),plot.margin = margin(5,3,3,3),legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+#### Moment-Angle
+```{r Ankle Moment-Angle}
+
+
+TimeVector = seq(1,length(HC01_PowerData$AnklePower),by=1)/300
+
+
+
+PowerSignChange_Power <- as.data.frame( x = 1 )
+RowtoFill <- 1
+     
+     
+     
+
+for (j in 1:(length(HC01_PowerData$AnklePower)-1) ) {
+     
+     
+     if ( HC01_PowerData$AnklePower[j] < 0 & HC01_PowerData$AnklePower[j+1] > 0 ) {
+          
+          
+          PowerSignChange_Power[ RowtoFill ] <- HC01_PowerData$AnklePower[j+1]
+          
+          RowtoFill <- RowtoFill + 1
+          
+          
+     } else {
+          
+          X <- 'Hi' 
+          
+          
+     }
+     
+     
+}
+
+
+
+
+colnames( PowerSignChange_Power ) <- c( 'TimeChange1', 'TimeChange2' )
+
+
+TimeofPowerSignChange <- as.data.frame( x = HC01_PowerData$TimeVector[ which( HC01_PowerData$AnklePower == PowerSignChange_Power$TimeChange2 ) ] )
+     
+colnames(TimeofPowerSignChange ) <- 'Time'
+
+
+
+NegativeAnkle_Moment <- HC01_PowerData %>% filter( TimeVector < TimeofPowerSignChange$Time & VGRF_Normalized_Downsampled > ( 20/(82.19*9.81) ) )
+
+PositiveAnkle_Moment <- HC01_PowerData %>% filter( TimeVector >= TimeofPowerSignChange$Time )
+
+
+
+
+
+
+     
+PowerSignChange_MomentandAngleValue <- as.data.frame( x = HC01_PowerData$AnkleTorque[ which( HC01_PowerData$AnklePower == PowerSignChange_Power$TimeChange2 ) ] )
+
+PowerSignChange_MomentandAngleValue$Angle <-  HC01_PowerData$AnkleAngle[ which( HC01_PowerData$AnklePower == PowerSignChange_Power$TimeChange2 ) ]
+
+colnames(PowerSignChange_MomentandAngleValue) <- c( 'Torque', 'Angle' )
+
+     
+
+
+
+(BAnklePower <- ggplot(data=HC01_PowerData,aes(x,y) ) +
+    
+
+     geom_hline(yintercept=0,color='#000000',size=1,linetype='dashed')+      
+    
+
+#### Cohort Data    
+          
+ 
+
+    geom_point( aes(x = AnkleAngle,
+      y = AnkleTorque,
+      group=Participant_ID,
+      color='#003D6B'),na.rm=FALSE,inherit.aes=FALSE,size=3) +
+          
+          
+   geom_point( data = PowerSignChange_MomentandAngleValue, aes( x = Angle, y = Torque, color='white' ), size = 4 ) +
+          
+          
+                    
+               
+     geom_line( data = NegativeAnkle_Moment, aes( x = AnkleAngle, y = AnkleTorque, color = 'gray50' ), size = 1.5 ) +      
+          
+          
+     geom_line( data = PositiveAnkle_Moment, aes( x = AnkleAngle, y = AnkleTorque, color = 'gray75' ), size = 1.5 ) +
+   
+          
+          
+          
+          
+     geom_point( data = PowerSignChange_MomentandAngleValue, aes( x = Angle, y = Torque, color='darkred' ), size = 3.5 ) +
+          
+      
+
+     geom_segment( data = NULL, aes( x = -4, xend = -6, y = -0.75, yend = -0.9, color = '#000000' ), size=1.5,arrow=arrow(length=unit(0.15,'inches')),show.legend=FALSE ) +     
+          
+     geom_text( label = 'During Power Absorption', aes( x = 0, y = -0.7 ), size = 6 ) +     
+     
+          
+          
+     geom_segment( data = NULL, aes( x = -10, xend = -8, y = -1.12, yend = -1, color = '#000000' ), size=1.5,arrow=arrow(length=unit(0.15,'inches')),show.legend=FALSE ) +  
+     
+     geom_text( label = 'During Power Generation', aes( x = -14, y = -1.15 ), size = 6 ) + 
+
+          
+scale_color_manual(values = c('#003D6B'='#003D6B','#40004b','#8073ac','darkred'='darkred', 'purple4' = 'purple4', '#276419' = '#276419', 'white' = 'white', 'gray50' = 'gray50', 'gray75' = 'gray75', '#000000' = '#000000' ),
+      name = 'Joint ID',aesthetics=c('color'),labels=c('Ankle','Knee','Hip','vGRF') ) +
+         
+           
+scale_fill_manual(values = c('purple4' = 'purple4', 'darkred'='darkred'),
+      name = 'Phase ID',aesthetics=c('fill'),labels=c('Negative Power', 'Positive Power') ) +
+    
+    scale_shape_manual(values=c(21,24,23,9),name='Joint ID',labels=c('Ankle','Knee','Hip','vGRF') )+
+
+            
+    scale_y_continuous( breaks=seq(-3.25,0.05,by=0.25),limits=c(-3.25,0.05) )+
+          
+     scale_x_continuous(breaks=seq( -28, 12, by = 4 ),limits=c(-28,12) )+     
+
+
+    
+    labs(title='Quasi-Stiffness Calculation',x= expression( paste( 'Angle (', degree, ')', '\n', '[ - = PF, + = DF ]' ) ),y='Torque (N-m/kg)' ) +
+    
+          
+          
+    guides(fill=guide_legend(aes=c('fill'),title='Phase ID'),shape=guide_legend(title='Joint ID'),linetype=guide_legend(title='Joint ID'),color='none' )+
+          
+          
+          
+
+    theme(plot.title = element_text(size = 30,hjust = 0.5,face = 'bold'),
+                axis.title.x = element_text(size = 25,face = 'bold.italic'),
+                axis.title.y.left = element_text(size = 25,face = 'bold.italic'),,axis.title.y.right = element_text(size = 25,face = 'bold.italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 23.5,face = 'bold.italic'),
+      axis.text.y.right=element_text(size=23.5,color='darkred',face = 'bold.italic'),
+                axis.text.x  =  element_text(size = 23.5,face = 'bold.italic'),
+                legend.position = 'top', legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),plot.margin = margin(5,3,3,3),legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),legend.box.background=element_rect(color='black',size=1),panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255)),panel.grid.major.y=element_line(color='darkgrey'),panel.grid.minor.y=element_line(color='darkgrey'),strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+```
+
+
+
+
+## GGArrange
+```{r Unrectified Ankle Power}
+
+ggarrange( BAnklePower, BKnee_Power, BHip_Power, nrow = 3,common.legend=T, label.y = 'Power (J/kg)' )
+
+```
+
+
+```{r Rectified Ankle Power}
+
+ggarrange( BAnklePower_Rectified, BKnee_Power_Rectified, BHip_Power_Rectified, nrow = 3,common.legend=T, label.y = 'Power (J/kg)' )
+
+```
+
+
+## GGArrange
+```{r}
+
+ggarrange( BAnklePower, FWRGasMed, nrow = 2 )
+
+```

@@ -1,0 +1,230 @@
+---
+title: "Dissertation Demographics"
+output: html_document
+date: "2023-08-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load - Libraries
+```{r Load Libraries, message=FALSE , include=FALSE,results='hide'}
+library(R.matlab)
+library(ggplot2)
+library(pander)
+library(stargazer)
+library(gridExtra)
+library(ggpubr)
+library(RColorBrewer)
+library(reshape2)
+library(effsize)
+library(ggsignif)
+library(lme4)
+library(ggeffects)
+library(effects)
+library(clubSandwich)
+library(DescTools)
+library(readxl)
+library(xlsx)
+library(dplyr)
+library(shadowtext)
+library(MetBrewer)
+library(sjstats)
+library(coin)
+library(rstatix)
+library(tidyverse)
+library(datarium)
+
+setTimeLimit(cpu= Inf, elapsed = Inf, transient = FALSE)
+```
+
+
+
+
+## Load Data
+
+
+### Eligibility Questionnaire
+
+```{r All Collected Participants}
+
+
+Eligibility <- as.data.frame(read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/Demographics/EligibilityQuestionnaire_OnlyCollected_2024-Mar-5.xlsx' ))
+
+
+```
+
+
+
+```{r Only Matched Participants}
+
+
+Eligibility <- as.data.frame(read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/Demographics/EligibilityQuestionnaire_OnlyMatched_2024-Apr-26.xlsx' ))
+
+
+```
+
+
+
+## DPLYR
+```{r Eligibility Questionnaire}
+
+#Separate out ATx group
+Eligibility_ATx <- Eligibility %>%
+   filter( Group_ID == 'ATx' )
+
+#Separate out Control group
+Eligibility_Control <- Eligibility %>%
+   filter( Group_ID == 'Control' )
+
+```
+
+
+
+## Calculations
+
+
+### Eligibility
+```{r ATx}
+
+#Average age
+mean( Eligibility_ATx$`Age:` )
+
+#Minimum age
+min( Eligibility_ATx$`Age:` )
+
+#Max age
+max( Eligibility_ATx$`Age:` )
+
+#SD for age
+sd( Eligibility_ATx$`Age:` )
+
+
+length(Eligibility_ATx$`Please mark your biological sex  (your responses will not affect your eligibility for this study).`[ which(Eligibility_ATx$`Please mark your biological sex  (your responses will not affect your eligibility for this study).`=='Male') ] )
+
+length(Eligibility_ATx$`Please mark your biological sex  (your responses will not affect your eligibility for this study).`[ which(Eligibility_ATx$`Please mark your biological sex  (your responses will not affect your eligibility for this study).`=='Female') ] )
+
+#Average weight, in kg
+mean( Eligibility_ATx$`Weight (kilograms) - if known` )
+
+#Minimum weight, in kg
+min( Eligibility_ATx$`Weight (kilograms) - if known` )
+
+#Maximum weight, in kg
+max( Eligibility_ATx$`Weight (kilograms) - if known` )
+
+#SD for weight, in kg
+sd( Eligibility_ATx$`Weight (kilograms) - if known` )
+
+
+#Average height in cm
+mean( Eligibility_ATx$`Height (cm) - if known` )
+
+#Minimum height
+min( Eligibility_ATx$`Height (cm) - if known` )
+
+#Max height
+max( Eligibility_ATx$`Height (cm) - if known` )
+
+#SD for age
+sd( Eligibility_ATx$`Height (cm) - if known` )
+
+
+
+length( Eligibility_ATx$`Please indicate the Achilles tendon(s) in which you have experienced any symptoms`[ which( Eligibility_ATx$`Please indicate the Achilles tendon(s) in which you have experienced any symptoms` == 'Both' & Eligibility_ATx$`Please mark your biological sex  (your responses will not affect your eligibility for this study).` == 'Male' ) ] )
+
+```
+
+
+```{r Controls}
+
+
+#Average age
+mean( Eligibility_Control$`Age:` )
+
+#Minimum age
+min( Eligibility_Control$`Age:` )
+
+#Max age
+max( Eligibility_Control$`Age:` )
+
+#SD for age
+sd( Eligibility_Control$`Age:` )
+
+
+
+length(Eligibility_Control$`Please mark your biological sex  (your responses will not affect your eligibility for this study).`[ which(Eligibility_Control$`Please mark your biological sex  (your responses will not affect your eligibility for this study).`=='Male') ] )
+
+length(Eligibility_Control$`Please mark your biological sex  (your responses will not affect your eligibility for this study).`[ which(Eligibility_Control$`Please mark your biological sex  (your responses will not affect your eligibility for this study).`=='Female') ] )
+
+
+
+#Average weight, in kg
+mean( Eligibility_Control$`Weight (kilograms) - if known` )
+
+#Minimum weight, in kg
+min( Eligibility_Control$`Weight (kilograms) - if known` )
+
+#Maximum weight, in kg
+max( Eligibility_Control$`Weight (kilograms) - if known` )
+
+#SD for weight, in kg
+sd( Eligibility_Control$`Weight (kilograms) - if known` )
+
+
+
+
+
+
+#Average height in cm
+mean( Eligibility_Control$`Height (cm) - if known` )
+
+#Minimum height
+min( Eligibility_Control$`Height (cm) - if known` )
+
+#Max height
+max( Eligibility_Control$`Height (cm) - if known` )
+
+#SD for height
+sd( Eligibility_Control$`Height (cm) - if known` )
+
+```
+
+
+## Stats
+
+## Independent T-test
+```{r Age vs Group}
+
+Eligibility %>%
+   t_test( `Age:` ~ Group_ID, detailed = T )
+
+```
+
+```{r Height (in) vs Group}
+
+Eligibility %>%
+   t_test( `Height (in.)` ~ Group_ID, detailed = T )
+
+```
+
+
+
+```{r Weigh (lbs) vs Group}
+
+Eligibility %>%
+   t_test( `Weight (pounds)` ~ Group_ID, detailed = T )
+
+```
+
+
+
+
+```{r BMI vs Group}
+
+Eligibility %>%
+   t_test( BMI ~ Group_ID, detailed = T )
+
+```
+

@@ -1,0 +1,831 @@
+---
+title: "DTOW Dissertation Analysis Progress"
+output: html_document
+date: "2024-03-05"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Load Libraries, message=FALSE , include=FALSE,results='hide'}
+library(R.matlab)
+library(ggplot2)
+library(pander)
+library(stargazer)
+library(gridExtra)
+library(ggpubr)
+library(RColorBrewer)
+library(reshape2)
+library(effsize)
+library(ggsignif)
+library(lme4)
+library(ggeffects)
+library(effects)
+library(clubSandwich)
+library(DescTools)
+library(readxl)
+library(xlsx)
+library(dplyr)
+library(shadowtext)
+library(MetBrewer)
+library(sjstats)
+library(coin)
+library(rstatix)
+library(tidyverse)
+library(datarium)
+library(svglite)
+library(MASS)
+library(car)
+library(robustlmm)
+library(forcats)
+
+setTimeLimit(cpu= Inf, elapsed = Inf, transient = FALSE)
+```
+
+## Load Data
+
+```{r Recruitment Progress}
+
+RecruitmentProgress <- as.data.frame( read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/Processing Progress/Recruitment and Processing Progress - for Graphing.xlsx', sheet = 1 ) )
+
+
+RecruitmentProgress$CollectionStatus <- factor( RecruitmentProgress$CollectionStatus, levels = c('Screening Needed','Screened','Screened and Included','Scheduled','Collected'), ordered = T  )
+
+
+```
+
+
+
+```{r Collection Progress}
+
+MonthlyCollectionProgress <- as.data.frame( read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/Processing Progress/Recruitment and Processing Progress - for Graphing.xlsx', sheet = 2 ) )
+
+MonthlyCollectionProgress$Month[ c(22,23,24) ] <- 'April'
+
+MonthlyCollectionProgress$Month <- factor( MonthlyCollectionProgress$Month, levels = c( 'Before October', 'October', 'November', 'December', 'January', 'February', 'March', 'April' ), ordered = T )
+
+MonthlyCollectionProgress$Group_ID <- factor( MonthlyCollectionProgress$Group_ID, levels = c( 'Control', 'ATx', 'Total Sample Size'  ), ordered = T )
+
+```
+
+
+
+
+```{r Processing Progress}
+
+ProcessingProgress <- as.data.frame( read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/Processing Progress/Recruitment and Processing Progress - for Graphing.xlsx', sheet = 4 ) )
+
+ProcessingProgress$ProcessingLabel <- factor( ProcessingProgress$ProcessingLabel, levels = c( "Total Collected", "Sent for Labeling", "Checked Labeling", "Processed in V3D", "vGRF Processed" , "Kinematics Processed", "Joint Power Processed", "Energy Flow Processed", "MVIC Processed", "Basic EMG Processed", "Coactivation Processed", "EMG Hz Processed" ), ordered = T )
+
+ProcessingProgress$DateLabel <- factor( ProcessingProgress$DateLabel, levels = c( "March 2024 Meeting", "Current Progress" ), ordered = T )
+
+```
+
+
+## PLOTS
+
+```{r Recruitment Progress }
+
+
+#Use ggplot to create the figure. X-axis = segment ID, y = average energy
+(RecruitmentProgressPlot <- ggplot(data = RecruitmentProgress, aes( y = fct_relevel( CollectionStatus, c( 'Collected', 'Scheduled', 'Screened and Included', 'Screened', 'Screening Needed' ) ), x = NumberofParticipants ) ) +
+      
+    #Use geom_text to add ATx group label in the respective color
+    geom_text( label = 'ATx', size = 13, color = '#c51b7d', aes( x = 8 ), data = subset( RecruitmentProgress, CollectionStatus == 'Scheduled' ), nudge_y = -0.1, fontface = 'bold' ) +
+      
+    #Use geom_text to add Control group label in the respective color
+    geom_text( label = 'Control', size = 13, color = '#4d9221', aes( x = 8 ), data = subset( RecruitmentProgress, CollectionStatus == 'Scheduled' ), nudge_y = 0.1, fontface = 'bold' ) +
+    
+    
+    
+      
+   
+ 
+    
+      #Use geom_col to plot bars
+      geom_col( orientation = 'y', aes( group = interaction( Group_ID, CollectionStatus), fill = Group_ID ), color = 'black', position = position_dodge2(preserve = 'total') ) +
+      
+    
+       #Use geom_text to add number for Screening Needed, Control group
+    geom_text( label = as.character( RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screening Needed' & RecruitmentProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x = RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screening Needed' & RecruitmentProgress$Group_ID == 'Control' ) ] ), data = subset( RecruitmentProgress, CollectionStatus == 'Screening Needed' ), nudge_y = 0.25, nudge_x = 0.5, fontface = 'bold' ) +
+      
+    
+       #Use geom_text to add number for Screening Needed, Control group
+    geom_text( label = as.character( RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screening Needed' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x = RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screening Needed' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), data = subset( RecruitmentProgress, CollectionStatus == 'Screening Needed' ), nudge_y = -0.25, nudge_x = 0.5, fontface = 'bold' ) +
+      
+
+       #Use geom_text to add number for Screened and Included, Control group
+    geom_text( label = as.character( RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screened and Included' & RecruitmentProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x = RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screened and Included' & RecruitmentProgress$Group_ID == 'Control' ) ] ), data = subset( RecruitmentProgress, CollectionStatus == 'Screened and Included' ), nudge_y = 0.25, nudge_x = 0.5, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for Screened and Included, Control group
+    geom_text( label = as.character( RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screened and Included' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x = RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screened and Included' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), data = subset( RecruitmentProgress, CollectionStatus == 'Screened and Included' ), nudge_y = -0.25, nudge_x = 0.5, fontface = 'bold' ) +
+
+
+
+
+       #Use geom_text to add number for Screened, Control group
+    geom_text( label = as.character( RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screened' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x = RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Screened' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), data = subset( RecruitmentProgress, CollectionStatus == 'Screened' ), nudge_x = 0.5, nudge_y = -0.25, fontface = 'bold' ) +
+
+
+    
+    
+    
+    
+       #Use geom_text to add number for Scheduled, Control group
+    geom_text( label = as.character( RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Scheduled' & RecruitmentProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x = RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Scheduled' & RecruitmentProgress$Group_ID == 'Control' ) ] ), data = subset( RecruitmentProgress, CollectionStatus == 'Scheduled' ), nudge_y = 0.25, nudge_x = 0.5, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for Scheduled, Control group
+    geom_text( label = as.character( RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Scheduled' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x = RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Scheduled' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), data = subset( RecruitmentProgress, CollectionStatus == 'Scheduled' ), nudge_y = -0.25, nudge_x = 0.5, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for Collected, Control group
+    geom_text( label = as.character( RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Collected' & RecruitmentProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x = RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Collected' & RecruitmentProgress$Group_ID == 'Control' ) ] ), data = subset( RecruitmentProgress, CollectionStatus == 'Collected' ), nudge_y = 0.25, nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for Collected, Control group
+    geom_text( label = as.character( RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Collected' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x = RecruitmentProgress$NumberofParticipants[ which( RecruitmentProgress$CollectionStatus == 'Collected' & RecruitmentProgress$Group_ID == 'ATx' ) ] ), data = subset( RecruitmentProgress, CollectionStatus == 'Collected' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+
+
+      #Specify the crossbar colors and data point outline colors. Use the categorical variable name to ensure the color is assigned appropriately.
+      scale_color_manual(values = c( 'Minimum_2mm_Diff' = '#c51b7d', 
+                                 'LessThan_2mm_Diff' = '#7fbc41',
+                                 'Control' = '#4d9221'  ),
+                         labels = c( 'LessThan_2mm_Diff' = '< 2 mm ATx Group', 'Minimum_2mm_Diff' = 'Min of 2 mm ATx Group', 'Control' = 'Healthy Control' ),
+                         name = 'Group ID',aesthetics=c('color') ) +
+      
+    
+       #Specify the fill colors for the data points. Use the categorical variable name to ensure the color is assigned appropriately.
+      scale_fill_manual(values = c('Ankle'='#1b9e77','Knee' = '#7570b3','Hip'='#d95f02', 'ATx07'=met.brewer('OKeeffe1')[1], 
+                                    
+                                    'ATx08' = met.brewer('OKeeffe1')[2],
+                                    'ATx10'=met.brewer('OKeeffe1')[3], 
+                                    'ATx12'=met.brewer('OKeeffe1')[4],
+                                    'ATx17'=met.brewer('OKeeffe1')[5],
+                                    'ATx18'=met.brewer('OKeeffe1')[6],
+                                    'ATx19'=met.brewer('OKeeffe1')[7],
+                                    'ATx21'=met.brewer('OKeeffe1')[8],
+                                    'ATx24'=met.brewer('OKeeffe1')[9],
+                                    'ATx25'=met.brewer('OKeeffe1')[10],
+                                    'ATx27'=met.brewer('OKeeffe1')[11],
+                                    'ATx34'=met.brewer('OKeeffe1')[12],
+                                    'ATx38'=met.brewer('OKeeffe1')[1],
+                                    'ATx41'=met.brewer('OKeeffe1')[2],
+                                    'ATx44'=met.brewer('OKeeffe1')[3],
+                                    'ATx50'=met.brewer('OKeeffe1')[4],
+                                    'HC01'=met.brewer('OKeeffe1')[1], 
+                                    'HC19' = met.brewer('OKeeffe1')[2],
+                                    'HC12'=met.brewer('OKeeffe1')[3], 
+                                    'HC05'=met.brewer('OKeeffe1')[4],
+                                    'HC06'=met.brewer('OKeeffe1')[5],
+                                    'HC08'=met.brewer('OKeeffe1')[6],
+                                    'HC20'=met.brewer('OKeeffe1')[7],
+                                    'HC11'=met.brewer('OKeeffe1')[8],
+                                    'HC17'=met.brewer('OKeeffe1')[9],
+                                    'HC21'=met.brewer('OKeeffe1')[11],
+                                    'HC25'=met.brewer('OKeeffe1')[12],
+                                    'HC18'=met.brewer('OKeeffe1')[2],
+                                    'Matched Dominance' = '#4d9221',
+                                 'Minimum_2mm_Diff' = '#c51b7d', 
+                                 'LessThan_2mm_Diff' = '#7fbc41',
+                                 'Control' = '#4d9221',
+                                 'ATx' = '#c51b7d' ) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34', 'ATx38', 'ATx41', 'ATx44', 'ATx50', 'HC01', 'HC05', 'HC06','HC08', 'HC11','HC12','HC17','HC18','HC19', 'HC20', 'HC21', 'HC25', 'Matched Dominance' ),
+                         name = 'Participant ID',aesthetics=c('fill') ) +
+      
+      #Specify the limits and ticks of the x-axis
+      scale_x_continuous( breaks = seq(0, 28, by = 2), limits = c(0, 28) )+
+    
+    scale_y_discrete( limits = c( 'Screening Needed', 'Screened', 'Screened and Included', 'Scheduled', 'Collected' ) ) +
+    
+      #Specify the shapes for each morphology group
+      scale_shape_manual( values = c( 'LessThan_2mm_Diff' = 22, 'Minimum_2mm_Diff' = 23, 'Control' = 21 ), labels = c( 'LessThan_2mm_Diff' = '< 2 mm ATx Group', 'Minimum_2mm_Diff' = 'Min of 2 mm ATx Group', 'Control' = 'Healthy Control' ) ) +
+      
+      #Specify the labels for the plot in general, followed by the x-axis then the y-axis
+      labs(title='  Recruitment Progress ', x = 'Number of Participants', y = ' Recruitment Status ' ) +
+      
+    
+      #Remove all legends
+      guides( color='none', size='none', fill = 'none', alpha = 'none', shape = 'none' )+ 
+      
+      #Adjust the plot theme
+      theme(plot.title = element_text(size = 45,hjust = 0.5,face = 'bold'),
+            axis.title.x = element_text(size = 40,face = 'bold.italic'),
+            axis.title.y.left = element_text(size = 40,face = 'bold.italic'),
+            axis.title.y.right = element_text(size = 45,face = 'bold.italic',vjust=0.9,color='darkred'),
+            axis.text.y.left  =  element_text(size = 30,face = 'bold.italic'),
+            axis.text.y.right=element_text(size=30,color='darkred',face = 'bold.italic'),
+            axis.text.x  =  element_text(size = 30,face = 'bold.italic'),
+            legend.position = 'top', 
+            legend.text = element_text(size = 24.47,lineheight=100),
+            legend.title = element_text(size = 25.47),
+            #Adjust the plot margins to allow more space if needed. Order is top, right, bottom, left
+            plot.margin = margin(5,3,3,3),
+            #Adjust the plot background color - this is the color outside the area where data is plotted
+            plot.background=element_rect(color=rgb(245,245,220,maxColorValue = 255),fill=rgb(245,245,220,maxColorValue = 255)),
+            # #Adjust the color of the boxes around each symbol in the legend
+            #legend.key  =  element_rect( fill = 'white', color = 'white' ),
+            #Adjust the height and width of the legend key symbol boxes
+            legend.key.height=unit(0,'lines'),
+            legend.key.width=unit(0.5,'lines'),
+            #Adjust the box around the entire legend
+            legend.box.background = element_rect( color='black', linewidth=1 ),
+            #Adjust the outline and fill colors of the entire plot background
+            panel.background = element_rect( color = 'black', fill = rgb( 245, 245, 220, maxColorValue = 255, alpha = 55) ),
+            #Adjust the major grid lines for the entire plot
+            panel.grid.major.y = element_line( color = 'darkgrey' ),
+            #Adjust the minor grid lines for the entire plot
+            panel.grid.minor.y = element_line( color = 'darkgrey' ),
+            #Strip text affects the subplot labels when using facet_wrap
+            strip.text=element_text( size = 30, face = 'bold' )  ) 
+ 
+)
+
+
+
+ggsave( filename = 'Dissertation_RecruitmentProgress_22-Apr-2024.png', width = 5750, height = 5750, units = 'px', plot = RecruitmentProgressPlot, path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Recruitment Progress/'  )
+
+```
+
+
+
+
+```{r  Collection Progress }
+
+c( 'Before October', 'October', 'November', 'December', 'January', 'February', 'March', 'April' )
+
+
+#Use ggplot to create the figure. X-axis = segment ID, y = average energy
+( CollectionProgressPlot <- ggplot(data =  MonthlyCollectionProgress, aes( y = fct_relevel( Month, c( 'Before October', 'October', 'November', 'December', 'January', 'February', 'March', 'April'  ) ), x = NumberofParticipants ) ) +
+      
+      
+      
+   
+      #Use geom_col to plot bars
+      geom_col( orientation = 'y', aes( group = interaction( Month, Group_ID ), fill = Group_ID ), color = 'black', position = position_dodge2(preserve = 'total') ) +
+      
+      
+      
+    #Use geom_text to add Total Sample Size label in the respective color
+    geom_text( label = 'Total Sample Size', size = 13, color = met.brewer('OKeeffe1')[11], aes( x = 35 ), data = subset(  MonthlyCollectionProgress, Month == 'Before October' ), nudge_y = 0.1, fontface = 'bold' ) +
+      
+    #Use geom_text to add ATx group label in the respective color
+    geom_text( label = 'New ATx Collected', size = 13, color = '#c51b7d', aes( x = 35.5 ), data = subset(  MonthlyCollectionProgress, Month == 'Before October' ), nudge_y = -0.1, fontface = 'bold' ) +
+      
+    #Use geom_text to add Control group label in the respective color
+    geom_text( label = 'New Control Collected', size = 13, color = '#4d9221', aes( x = 37 ), data = subset(  MonthlyCollectionProgress, Month == 'Before October' ), nudge_y = -0.3, fontface = 'bold' ) +
+    
+    
+    
+      
+      
+      
+      
+      
+      
+             #Use geom_text to add number for Before October, Control group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'Before October' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'Before October' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'Before October' ), nudge_y = -0.3, nudge_x = 1.25, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for Before October, ATx group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'Before October' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'Before October' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'Before October' ), nudge_x = 1.25, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for Before October, Total Sample Size group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'Before October' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'Before October' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'Before October' ), nudge_y = 0.3, nudge_x = 1.25, fontface = 'bold' ) +
+      
+      
+      
+    
+       #Use geom_text to add number for October, Control group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'October' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'October' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'October' ), nudge_y = -0.3, nudge_x = 0.75, fontface = 'bold' ) +
+      
+    
+       #Use geom_text to add number for October, ATx group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'October' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'October' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'October' ), nudge_x = 0.75, fontface = 'bold' ) +
+      
+    
+       #Use geom_text to add number for October, Total Sample Size group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'October' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'October' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'October' ), nudge_y = 0.3, nudge_x = 1.25, fontface = 'bold' ) +
+      
+      
+      
+      
+      
+
+       #Use geom_text to add number for November, Control group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'November' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'November' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'November' ), nudge_y = -0.3, nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for November, ATx group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'November' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'November' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'November' ), nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for November, Total Sample Size group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'November' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'November' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'November' ), nudge_y = 0.3, nudge_x = 1.25, fontface = 'bold' ) +
+
+
+      
+      
+
+  
+
+       #Use geom_text to add number for December, Control group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'December' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'December' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'December' ), nudge_y = -0.3, nudge_x = 0.75, fontface = 'bold' ) +  
+      
+      #Use geom_text to add number for December, ATx group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'December' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'December' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'December' ), nudge_x = 0.75, fontface = 'bold' ) +   
+
+       #Use geom_text to add number for December, Total Sample Size group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'December' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'December' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'December' ), nudge_y = 0.3, nudge_x = 1.25, fontface = 'bold' ) + 
+
+      
+      
+      
+      
+      
+
+       #Use geom_text to add number for January, Control group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'January' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'January' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'January' ), nudge_y = -0.3, nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for January, ATx group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'January' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'January' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'January' ), nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for January, Total Sample Size group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'January' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'January' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'January' ), nudge_y = 0.3, nudge_x = 1.25, fontface = 'bold' ) +
+
+      
+      
+      
+      
+      
+
+       #Use geom_text to add number for February, Control group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'February' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'February' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'February' ), nudge_y = -0.3, nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for February, ATx group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'February' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'February' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'February' ), nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for February, Total Sample Size group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'February' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'February' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'February' ), nudge_y = 0.3, nudge_x = 1.25, fontface = 'bold' ) +
+
+      
+      
+      
+      
+      
+
+       #Use geom_text to add number for March, Control group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'March' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'March' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'March' ), nudge_y = -0.3, nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for March, ATx group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'March' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'March' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'March' ), nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for March, Total Sample Size group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'March' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'March' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'March' ), nudge_y = 0.3, nudge_x = 1.25, fontface = 'bold' ) +
+
+      
+      
+      
+      
+      
+
+       #Use geom_text to add number for April, Control group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'April' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'April' &  MonthlyCollectionProgress$Group_ID == 'Control' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'April' ), nudge_y = -0.3, nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for April, ATx group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'April' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'April' &  MonthlyCollectionProgress$Group_ID == 'ATx' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'April' ), nudge_x = 0.75, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for April, Total Sample Size group
+    geom_text( label = as.character(  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'April' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), size = 13, color = 'black', aes( x =  MonthlyCollectionProgress$NumberofParticipants[ which(  MonthlyCollectionProgress$Month == 'April' &  MonthlyCollectionProgress$Group_ID == 'Total Sample Size' ) ] ), data = subset(  MonthlyCollectionProgress, Month == 'April' ), nudge_y = 0.3, nudge_x = 1.25, fontface = 'bold' ) +
+      
+      
+
+
+      #Specify the crossbar colors and data point outline colors. Use the categorical variable name to ensure the color is assigned appropriately.
+      scale_color_manual(values = c( 'Minimum_2mm_Diff' = '#c51b7d', 
+                                 'LessThan_2mm_Diff' = '#7fbc41',
+                                 'Control' = '#4d9221'  ),
+                         labels = c( 'LessThan_2mm_Diff' = '< 2 mm ATx Group', 'Minimum_2mm_Diff' = 'Min of 2 mm ATx Group', 'Control' = 'Healthy Control' ),
+                         name = 'Group ID',aesthetics=c('color') ) +
+      
+    
+       #Specify the fill colors for the data points. Use the categorical variable name to ensure the color is assigned appropriately.
+      scale_fill_manual(values = c('Ankle'='#1b9e77','Knee' = '#7570b3','Hip'='#d95f02', 'ATx07'=met.brewer('OKeeffe1')[1], 
+                                    
+                                    'ATx08' = met.brewer('OKeeffe1')[2],
+                                    'ATx10'=met.brewer('OKeeffe1')[3], 
+                                    'ATx12'=met.brewer('OKeeffe1')[4],
+                                    'ATx17'=met.brewer('OKeeffe1')[5],
+                                    'ATx18'=met.brewer('OKeeffe1')[6],
+                                    'ATx19'=met.brewer('OKeeffe1')[7],
+                                    'ATx21'=met.brewer('OKeeffe1')[8],
+                                    'ATx24'=met.brewer('OKeeffe1')[9],
+                                    'ATx25'=met.brewer('OKeeffe1')[10],
+                                    'ATx27'=met.brewer('OKeeffe1')[11],
+                                    'ATx34'=met.brewer('OKeeffe1')[12],
+                                    'ATx38'=met.brewer('OKeeffe1')[1],
+                                    'ATx41'=met.brewer('OKeeffe1')[2],
+                                    'ATx44'=met.brewer('OKeeffe1')[3],
+                                    'ATx50'=met.brewer('OKeeffe1')[4],
+                                    'HC01'=met.brewer('OKeeffe1')[1], 
+                                    'HC19' = met.brewer('OKeeffe1')[2],
+                                    'HC12'=met.brewer('OKeeffe1')[3], 
+                                    'HC05'=met.brewer('OKeeffe1')[4],
+                                    'HC06'=met.brewer('OKeeffe1')[5],
+                                    'HC08'=met.brewer('OKeeffe1')[6],
+                                    'HC20'=met.brewer('OKeeffe1')[7],
+                                    'HC11'=met.brewer('OKeeffe1')[8],
+                                    'HC17'=met.brewer('OKeeffe1')[9],
+                                    'HC21'=met.brewer('OKeeffe1')[11],
+                                    'HC25'=met.brewer('OKeeffe1')[12],
+                                    'HC18'=met.brewer('OKeeffe1')[2],
+                                    'Matched Dominance' = '#4d9221',
+                                 'Minimum_2mm_Diff' = '#c51b7d', 
+                                 'LessThan_2mm_Diff' = '#7fbc41',
+                                 'Control' = '#4d9221',
+                                 'ATx' = '#c51b7d',
+                                 'Total Sample Size' = met.brewer('OKeeffe1')[11]) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34', 'ATx38', 'ATx41', 'ATx44', 'ATx50', 'HC01', 'HC05', 'HC06','HC08', 'HC11','HC12','HC17','HC18','HC19', 'HC20', 'HC21', 'HC25', 'Matched Dominance' ),
+                         name = 'Participant ID',aesthetics=c('fill') ) +
+      
+      #Specify the limits and ticks of the x-axis
+      scale_x_continuous( breaks = seq(0, 50, by = 5), limits = c(0, 50) )+
+    
+      #Specify limits to put labels in the desired order. First label will be on the bottom of the y-axis
+    scale_y_discrete( limits = c( 'April', 'March', 'February',  'January', 'December','November','October','Before October' ) ) +
+    
+      #Specify the shapes for each morphology group
+      scale_shape_manual( values = c( 'LessThan_2mm_Diff' = 22, 'Minimum_2mm_Diff' = 23, 'Control' = 21 ), labels = c( 'LessThan_2mm_Diff' = '< 2 mm ATx Group', 'Minimum_2mm_Diff' = 'Min of 2 mm ATx Group', 'Control' = 'Healthy Control' ) ) +
+      
+      #Specify the labels for the plot in general, followed by the x-axis then the y-axis
+      labs(title='   Collection Progress ', x = 'Number of Participants', y = '  Month ' ) +
+      
+    
+      #Remove all legends
+      guides( color='none', size='none', fill = 'none', alpha = 'none', shape = 'none' )+ 
+      
+      #Adjust the plot theme
+      theme(plot.title = element_text(size = 45,hjust = 0.5,face = 'bold'),
+            axis.title.x = element_text(size = 40,face = 'bold.italic'),
+            axis.title.y.left = element_text(size = 40,face = 'bold.italic'),
+            axis.title.y.right = element_text(size = 45,face = 'bold.italic',vjust=0.9,color='darkred'),
+            axis.text.y.left  =  element_text(size = 30,face = 'bold.italic'),
+            axis.text.y.right=element_text(size=30,color='darkred',face = 'bold.italic'),
+            axis.text.x  =  element_text(size = 30,face = 'bold.italic'),
+            legend.position = 'top', 
+            legend.text = element_text(size = 24.47,lineheight=100),
+            legend.title = element_text(size = 25.47),
+            #Adjust the plot margins to allow more space if needed. Order is top, right, bottom, left
+            plot.margin = margin(5,3,3,3),
+            #Adjust the plot background color - this is the color outside the area where data is plotted
+            plot.background=element_rect(color=rgb(245,245,220,maxColorValue = 255),fill=rgb(245,245,220,maxColorValue = 255)),
+            # #Adjust the color of the boxes around each symbol in the legend
+            #legend.key  =  element_rect( fill = 'white', color = 'white' ),
+            #Adjust the height and width of the legend key symbol boxes
+            legend.key.height=unit(0,'lines'),
+            legend.key.width=unit(0.5,'lines'),
+            #Adjust the box around the entire legend
+            legend.box.background = element_rect( color='black', linewidth=1 ),
+            #Adjust the outline and fill colors of the entire plot background
+            panel.background = element_rect( color = 'black', fill = rgb( 245, 245, 220, maxColorValue = 255, alpha = 55) ),
+            #Adjust the major grid lines for the entire plot
+            panel.grid.major.y = element_line( color = 'darkgrey' ),
+            #Adjust the minor grid lines for the entire plot
+            panel.grid.minor.y = element_line( color = 'darkgrey' ),
+            #Strip text affects the subplot labels when using facet_wrap
+            strip.text=element_text( size = 30, face = 'bold' )  ) 
+ 
+)
+
+
+
+ggsave( filename = 'Dissertation_ CollectionProgress_22-Apr-2024.png', width = 5750, height = 5750, units = 'px', plot =  CollectionProgressPlot, path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Collection Progress/'  )
+
+```
+
+
+
+
+
+```{r Processing Progress }
+
+
+#Use ggplot to create the figure. X-axis = segment ID, y = average energy
+(ProcessingProgressPlot <- ggplot(data = ProcessingProgress, aes( y = ProcessingLabel, x = NumberofParticipants ) ) +
+      
+    
+    
+    #Use geom_text to add ATx group label in the respective color
+    geom_text( label = 'ATx', size = 13, color = '#c51b7d', aes( x = 8 ), data = subset( ProcessingProgress, ProcessingLabel == 'Scheduled' ), nudge_y = -0.1, fontface = 'bold' ) +
+      
+    #Use geom_text to add Control group label in the respective color
+    geom_text( label = 'Control', size = 13, color = '#4d9221', aes( x = 8 ), data = subset( ProcessingProgress, ProcessingLabel == 'Scheduled' ), nudge_y = 0.1, fontface = 'bold' ) +
+      
+    #Use geom_text to add Control group label in the respective color
+    geom_text( label = 'Both Groups', size = 13, color =  met.brewer('OKeeffe1')[11], aes( x = 8 ), data = subset( ProcessingProgress, ProcessingLabel == 'Scheduled' ), nudge_y = 0.1, fontface = 'bold' ) +
+    
+    
+    
+
+
+
+
+      #Use geom_col to plot bars
+      geom_col( orientation = 'y', aes( group = interaction( DateLabel, Group_ID ), fill = Group_ID ), color = 'black', position = position_dodge2(preserve = 'total') ) +
+
+
+
+
+       #Use geom_text to add number for Total Collected, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Total Collected' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Total Collected' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Total Collected' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for Total Collected, Control group
+       geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Total Collected' & ProcessingProgress$Group_ID == 'ATx' & ProcessingProgress$DateLabel == 'March 2024 Meeting'  ) ] ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Total Collected' & ProcessingProgress$Group_ID == 'ATx' & ProcessingProgress$DateLabel == 'March 2024 Meeting'  ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Total Collected' ), nudge_y = 0.1, nudge_x = 1, fontface = 'bold' ) +
+
+
+       #Use geom_text to add number for Total Collected, Control group
+    geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Total Collected' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Total Collected' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Total Collected' ), nudge_y = -0.25, nudge_x = 1.5, fontface = 'bold' ) +
+
+
+
+
+
+       #Use geom_text to add number for Sent for Labeling, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Sent for Labeling' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Sent for Labeling' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Sent for Labeling' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    # 
+    #    #Use geom_text to add number for Sent for Labeling, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Sent for Labeling' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Sent for Labeling' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Sent for Labeling' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    #    #Use geom_text to add number for Sent for Labeling, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Sent for Labeling' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Sent for Labeling' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Sent for Labeling' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+    # 
+       #Use geom_text to add number for Checked Labeling, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Checked Labeling' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Checked Labeling' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Checked Labeling' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    # #Use geom_text to add number for Screened, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Screened' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Screened' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Screened' ), nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # #Use geom_text to add number for Screened, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Screened' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Screened' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Screened' ), nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+    # 
+    # 
+    # 
+       #Use geom_text to add number for Collected, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Collected' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Collected' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Collected' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for Checked Labeling, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Checked Labeling' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Checked Labeling' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Checked Labeling' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for Checked Labeling, All group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Checked Labeling' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Checked Labeling' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Checked Labeling' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+    # 
+       #Use geom_text to add number for Processed in V3D, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Processed in V3D' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Processed in V3D' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Processed in V3D' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    # 
+    #    #Use geom_text to add number for Processed in V3D, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Processed in V3D' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Processed in V3D' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Processed in V3D' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for Processed in V3D, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Processed in V3D' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Processed in V3D' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Processed in V3D' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+    # 
+       #Use geom_text to add number for vGRF Processed, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'vGRF Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'vGRF Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'vGRF Processed' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    # 
+    #    #Use geom_text to add number for vGRF Processed, All group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'vGRF Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'vGRF Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'vGRF Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for vGRF Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'vGRF Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'vGRF Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'vGRF Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+    # 
+       #Use geom_text to add number for Kinematics Processed, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Kinematics Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Kinematics Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Kinematics Processed' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    # 
+    #    #Use geom_text to add number for Kinematics Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Kinematics Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Kinematics Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Kinematics Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for Kinematics Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Kinematics Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Kinematics Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Kinematics Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+    # 
+       #Use geom_text to add number for Joint Power Processed, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Joint Power Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Joint Power Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Joint Power Processed' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    # 
+    #    #Use geom_text to add number for Joint Power Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Joint Power Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Joint Power Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Joint Power Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for Joint Power Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Joint Power Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Joint Power Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Joint Power Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+
+       #Use geom_text to add number for Energy Flow Processed, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Energy Flow Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 1, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Energy Flow Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Energy Flow Processed' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+
+    # 
+    #    #Use geom_text to add number for Energy Flow Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Energy Flow Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Energy Flow Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Energy Flow Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for Energy Flow Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Energy Flow Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Energy Flow Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Energy Flow Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+
+       #Use geom_text to add number for MVIC Processed, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'MVIC Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'MVIC Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'MVIC Processed' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    # 
+    #    #Use geom_text to add number for MVIC Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'MVIC Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'MVIC Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'MVIC Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for MVIC Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'MVIC Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'MVIC Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'MVIC Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+    # 
+       #Use geom_text to add number for Basic EMG Processed, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Basic EMG Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Basic EMG Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Basic EMG Processed' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    # 
+    #    #Use geom_text to add number for Basic EMG Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Basic EMG Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Basic EMG Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Basic EMG Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for Basic EMG Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Basic EMG Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Basic EMG Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Basic EMG Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+    # 
+       #Use geom_text to add number for Coactivation Processed, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Coactivation Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Coactivation Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Coactivation Processed' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+    # 
+    # 
+    #    #Use geom_text to add number for Coactivation Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Coactivation Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Coactivation Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Coactivation Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for Coactivation Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Coactivation Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'Coactivation Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'Coactivation Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    # 
+    # 
+    # 
+    # 
+       #Use geom_text to add number for EMG Hz Processed, Control group
+    geom_text( label = paste( as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'EMG Hz Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ) ), size = 10, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'EMG Hz Processed' & ProcessingProgress$Group_ID == 'Control' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'EMG Hz Processed' ), nudge_y = 0.45, nudge_x = 1, fontface = 'bold' ) +
+
+    # 
+    #    #Use geom_text to add number for EMG Hz Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'EMG Hz Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'EMG Hz Processed' & ProcessingProgress$Group_ID == 'All' & ProcessingProgress$DateLabel == 'March 2024 Meeting' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'EMG Hz Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    #    #Use geom_text to add number for EMG Hz Processed, ATx group
+    # geom_text( label = as.character( ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'EMG Hz Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), size = 11, color = 'black', aes( x = ProcessingProgress$NumberofParticipants[ which( ProcessingProgress$ProcessingLabel == 'EMG Hz Processed' & ProcessingProgress$Group_ID == 'ATx' ) ] ), data = subset( ProcessingProgress, ProcessingLabel == 'EMG Hz Processed' ), nudge_y = -0.25, nudge_x = 0.75, fontface = 'bold' ) +
+    # 
+    
+    
+      #Specify the crossbar colors and data point outline colors. Use the categorical variable name to ensure the color is assigned appropriately.
+      scale_color_manual(values = c( 'Minimum_2mm_Diff' = '#c51b7d', 
+                                 'LessThan_2mm_Diff' = '#7fbc41',
+                                 'Control' = '#4d9221', 'All' =  met.brewer('OKeeffe1')[11]  ),
+                         labels = c( 'LessThan_2mm_Diff' = '< 2 mm ATx Group', 'Minimum_2mm_Diff' = 'Min of 2 mm ATx Group', 'Control' = 'Healthy Control' ),
+                         name = 'Group ID',aesthetics=c('color') ) +
+      
+    
+       #Specify the fill colors for the data points. Use the categorical variable name to ensure the color is assigned appropriately.
+      scale_fill_manual(values = c('Ankle'='#1b9e77','Knee' = '#7570b3','Hip'='#d95f02', 'ATx07'=met.brewer('OKeeffe1')[1], 
+                                    
+                                    'ATx08' = met.brewer('OKeeffe1')[2],
+                                    'ATx10'=met.brewer('OKeeffe1')[3], 
+                                    'ATx12'=met.brewer('OKeeffe1')[4],
+                                    'ATx17'=met.brewer('OKeeffe1')[5],
+                                    'ATx18'=met.brewer('OKeeffe1')[6],
+                                    'ATx19'=met.brewer('OKeeffe1')[7],
+                                    'ATx21'=met.brewer('OKeeffe1')[8],
+                                    'ATx24'=met.brewer('OKeeffe1')[9],
+                                    'ATx25'=met.brewer('OKeeffe1')[10],
+                                    'ATx27'=met.brewer('OKeeffe1')[11],
+                                    'ATx34'=met.brewer('OKeeffe1')[12],
+                                    'ATx38'=met.brewer('OKeeffe1')[1],
+                                    'ATx41'=met.brewer('OKeeffe1')[2],
+                                    'ATx44'=met.brewer('OKeeffe1')[3],
+                                    'ATx50'=met.brewer('OKeeffe1')[4],
+                                    'HC01'=met.brewer('OKeeffe1')[1], 
+                                    'HC19' = met.brewer('OKeeffe1')[2],
+                                    'HC12'=met.brewer('OKeeffe1')[3], 
+                                    'HC05'=met.brewer('OKeeffe1')[4],
+                                    'HC06'=met.brewer('OKeeffe1')[5],
+                                    'HC08'=met.brewer('OKeeffe1')[6],
+                                    'HC20'=met.brewer('OKeeffe1')[7],
+                                    'HC11'=met.brewer('OKeeffe1')[8],
+                                    'HC17'=met.brewer('OKeeffe1')[9],
+                                    'HC21'=met.brewer('OKeeffe1')[11],
+                                    'HC25'=met.brewer('OKeeffe1')[12],
+                                    'HC18'=met.brewer('OKeeffe1')[2],
+                                    'Matched Dominance' = '#4d9221',
+                                 'Minimum_2mm_Diff' = '#c51b7d', 
+                                 'LessThan_2mm_Diff' = '#7fbc41',
+                                 'Control' = '#4d9221',
+                                 'ATx' = '#c51b7d',
+                                 'All' =  met.brewer('OKeeffe1')[11] ) , labels=c('Ankle', 'Knee', 'Hip', 'ATx07', 'ATx08', 'ATx10','ATx12', 'ATx17','ATx18','ATx19','ATx21', 'ATx24', 'ATx25', 'ATx27', 'ATx34', 'ATx38', 'ATx41', 'ATx44', 'ATx50', 'HC01', 'HC05', 'HC06','HC08', 'HC11','HC12','HC17','HC18','HC19', 'HC20', 'HC21', 'HC25', 'Matched Dominance' ),
+                         name = 'Participant ID',aesthetics=c('fill') ) +
+      
+      #Specify the limits and ticks of the x-axis
+      scale_x_continuous( breaks = seq(0, 45, by = 5), limits = c(0, 45) )+
+    
+    #Specify limits to put labels in the desired order. First label will be on the bottom of the y-axis
+    scale_y_discrete( limits = c( "EMG Hz Processed", "Coactivation Processed", "Basic EMG Processed", "MVIC Processed", "Energy Flow Processed", "Joint Power Processed", "Kinematics Processed", "vGRF Processed" , "Processed in V3D", "Checked Labeling", "Sent for Labeling", "Total Collected"  ) ) +
+    
+    
+    
+      #Specify the shapes for each morphology group
+      scale_shape_manual( values = c( 'LessThan_2mm_Diff' = 22, 'Minimum_2mm_Diff' = 23, 'Control' = 21 ), labels = c( 'LessThan_2mm_Diff' = '< 2 mm ATx Group', 'Minimum_2mm_Diff' = 'Min of 2 mm ATx Group', 'Control' = 'Healthy Control' ) ) +
+      
+      #Specify the labels for the plot in general, followed by the x-axis then the y-axis
+      labs(title='  Processing Progress ', x = 'Number of Participants', y = ' Processing Status ' ) +
+      
+    
+      #Remove all legends
+      guides( color='none', size='none', fill = 'none', alpha = 'none', shape = 'none' )+ 
+      
+      #Adjust the plot theme
+      theme(plot.title = element_text(size = 45,hjust = 0.5,face = 'bold'),
+            axis.title.x = element_text(size = 40,face = 'bold.italic'),
+            axis.title.y.left = element_text(size = 40,face = 'bold.italic'),
+            axis.title.y.right = element_text(size = 45,face = 'bold.italic',vjust=0.9,color='darkred'),
+            axis.text.y.left  =  element_text(size = 30,face = 'bold.italic'),
+            axis.text.y.right=element_text(size=30,color='darkred',face = 'bold.italic'),
+            axis.text.x  =  element_text(size = 30,face = 'bold.italic'),
+            legend.position = 'top', 
+            legend.text = element_text(size = 24.47,lineheight=100),
+            legend.title = element_text(size = 25.47),
+            #Adjust the plot margins to allow more space if needed. Order is top, right, bottom, left
+            plot.margin = margin(5,3,3,3),
+            #Adjust the plot background color - this is the color outside the area where data is plotted
+            plot.background=element_rect(color=rgb(245,245,220,maxColorValue = 255),fill=rgb(245,245,220,maxColorValue = 255)),
+            # #Adjust the color of the boxes around each symbol in the legend
+            #legend.key  =  element_rect( fill = 'white', color = 'white' ),
+            #Adjust the height and width of the legend key symbol boxes
+            legend.key.height=unit(0,'lines'),
+            legend.key.width=unit(0.5,'lines'),
+            #Adjust the box around the entire legend
+            legend.box.background = element_rect( color='black', linewidth=1 ),
+            #Adjust the outline and fill colors of the entire plot background
+            panel.background = element_rect( color = 'black', fill = rgb( 245, 245, 220, maxColorValue = 255, alpha = 55) ),
+            #Adjust the major grid lines for the entire plot
+            panel.grid.major.y = element_line( color = 'darkgrey' ),
+            #Adjust the minor grid lines for the entire plot
+            panel.grid.minor.y = element_line( color = 'darkgrey' ),
+            #Strip text affects the subplot labels when using facet_wrap
+            strip.text=element_text( size = 30, face = 'bold' )  ) 
+ 
+)
+
+
+
+ggsave( filename = 'Dissertation_ProcessingProgress_22-Apr-2024.png', width = 5750, height = 5750, units = 'px', plot = ProcessingProgressPlot, path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Processing Progress/'  )
+
+```

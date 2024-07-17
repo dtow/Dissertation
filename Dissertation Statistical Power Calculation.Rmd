@@ -1,0 +1,1986 @@
+---
+title: "Dissertation Power Calculation"
+author: "David Ortiz"
+date: "2023-03-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+## Power Analysis Parameters
+
+###2.0 Hz
+#### T-test
+```{r MEE Absorption}
+
+( ATx_AnkleMEE_Absorption_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Absorption_MEE) )
+
+( Control_AnkleMEE_Absorption_SD <- sd(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Absorption_MEE) )
+
+PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Absorption_MEE)-1) * ATx_AnkleMEE_Absorption_SD^2  ) + ( (length(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Absorption_MEE)-1) * Control_AnkleMEE_Absorption_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Absorption_MEE) + length(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Absorption_MEE)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+#Assume control group mean is 0.7. Now find ATx mean
+0.7 - MeanDiff
+
+```
+
+
+
+```{r MEE Generation}
+
+( ATx_AnkleMEE_Generation_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Generation_MEE) )
+
+( Control_AnkleMEE_Generation_SD <- sd(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Generation_MEE) )
+
+PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Generation_MEE)-1) * ATx_AnkleMEE_Generation_SD^2  ) + ( (length(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Generation_MEE)-1) * Control_AnkleMEE_Generation_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Generation_MEE) + length(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Generation_MEE)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+#Find predicted ATx group mean
+0.7 - MeanDiff
+
+```
+
+
+
+
+```{r %MEE Absorption}
+
+( ATx_AnkleMEE_Absorption_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Percent_MEE_Absorption) )
+
+( Control_AnkleMEE_Absorption_SD <- sd(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Percent_MEE_Absorption) )
+
+PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Percent_MEE_Absorption)-1) * ATx_AnkleMEE_Absorption_SD^2  ) + ( (length(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Percent_MEE_Absorption)-1) * Control_AnkleMEE_Absorption_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Percent_MEE_Absorption) + length(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Percent_MEE_Absorption)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+#Find predicted ATx group mean
+75 - MeanDiff*100
+
+```
+
+
+
+
+```{r %MEE Generation}
+
+( ATx_AnkleMEE_Generation_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Percent_MEE_Generation) )
+
+( Control_AnkleMEE_Generation_SD <- sd(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Percent_MEE_Generation) )
+
+PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Percent_MEE_Generation)-1) * ATx_AnkleMEE_Generation_SD^2  ) + ( (length(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Percent_MEE_Generation)-1) * Control_AnkleMEE_Generation_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.0Hz$Mean_Joint_Percent_MEE_Generation) + length(Power_ParticipantMeans_ControlAnkle_2.0Hz$Mean_Joint_Percent_MEE_Generation)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+#Find predicted ATx group mean
+75 - MeanDiff*100
+
+```
+
+
+
+
+```{r TS Contribution Absorption}
+
+( ATx_AnkleMEE_Absorption_SD <- sd(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_BrakingPhase) )
+
+( Control_AnkleMEE_Absorption_SD <- sd(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_TSContributiontoPFActivity_BrakingPhase) )
+
+PooledSD <- sqrt( ( ( (length(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_BrakingPhase)-1) * ATx_AnkleMEE_Absorption_SD^2  ) + ( (length(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_TSContributiontoPFActivity_BrakingPhase)-1) * Control_AnkleMEE_Absorption_SD^2  )  ) / (length(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_BrakingPhase) + length(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_TSContributiontoPFActivity_BrakingPhase)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+#Find predicted ATx group mean
+70 - MeanDiff
+
+```
+
+
+
+
+```{r TS Contribution Generation}
+
+( ATx_AnkleMEE_Generation_SD <- sd(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase) )
+
+( Control_AnkleMEE_Generation_SD <- sd(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase) )
+
+PooledSD <- sqrt( ( ( (length(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase)-1) * ATx_AnkleMEE_Generation_SD^2  ) + ( (length(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase)-1) * Control_AnkleMEE_Generation_SD^2  )  ) / (length(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase) + length(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+#Find predicted ATx group mean
+70 - MeanDiff
+
+```
+
+
+```{r Gastroc Contribution to TS Absorption}
+
+( ATx_AnkleMEE_Absorption_SD <- sd(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase) )
+
+( Control_AnkleMEE_Absorption_SD <- sd(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase) )
+
+PooledSD <- sqrt( ( ( (length(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase)-1) * ATx_AnkleMEE_Absorption_SD^2  ) + ( (length(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase)-1) * Control_AnkleMEE_Absorption_SD^2  )  ) / (length(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase) + length(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+#Find predicted ATx group mean
+0.65 - MeanDiff
+
+```
+
+
+
+
+```{r Gastroc Contribution to TS Generation}
+
+( ATx_AnkleMEE_Generation_SD <- sd(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase) )
+
+( Control_AnkleMEE_Generation_SD <- sd(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase) )
+
+PooledSD <- sqrt( ( ( (length(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase)-1) * ATx_AnkleMEE_Generation_SD^2  ) + ( (length(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase)-1) * Control_AnkleMEE_Generation_SD^2  )  ) / (length(Dissertation_CombinedMEEandEMG_2Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase) + length(Dissertation_CombinedMEEandEMG_2Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+#Find predicted ATx group mean
+0.65 - MeanDiff
+
+```
+
+
+
+#### Regression
+```{r MEE Absorption}
+
+
+##Use Linear Multiple Regression: Fixed Model, R2 deviation from zero (G*Power)
+
+
+
+#Relation of TS activation and Group ID on ankle MEE, during braking phase.
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Mean_TSContributiontoPFActivity_BrakingPhase*Group_ID )
+
+summary( AnkleMEEvsGroup_Braking )
+
+
+
+
+
+#Find correlation between Ankle MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle MEE during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Mean_TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r MEE Generation}
+
+
+
+#Relation of TS activation and Group ID on ankle MEE, during braking phase.
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Mean_TSContributiontoPFActivity_PropulsionPhase*Group_ID )
+
+summary( AnkleMEEvsGroup_Propulsion )
+
+
+
+#Find correlation between Ankle MEE during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle MEE during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Mean_TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleMEEvsTSContribution_Propulsion$residuals^2 )/( sum( ( Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle$Mean_Joint_Generation_MEE - mean( Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle$Mean_Joint_Generation_MEE ) )^2 ) ) ) )
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+
+```{r %MEE Absorption}
+
+
+#Relation of TS activation and Group ID on ankle contribution to MEE, during braking phase.
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Mean_TSContributiontoPFActivity_BrakingPhase*Group_ID )
+
+summary( AnkleMEEvsGroup_Braking )
+
+
+
+#Find correlation between Ankle contribution to MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to MEE during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Mean_TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r %MEE Generation}
+
+
+#Relation of TS activation and Group ID on ankle contribution to MEE, during Propulsion phase.
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Mean_TSContributiontoPFActivity_PropulsionPhase*Group_ID )
+
+summary( AnkleMEEvsGroup_Propulsion )
+
+
+#Find correlation between Ankle contribution to MEE during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to MEE during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Mean_TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleMEEvsTSContribution_Propulsion$residuals^2 )/( sum( ( Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle$Mean_Joint_Percent_MEE_Generation - mean( Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle$Mean_Joint_Percent_MEE_Generation ) )^2 ) ) ) )
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+
+
+### 2.3 Hz
+#### T-test
+
+
+```{r WorkRate Absorption}
+
+( ATx_AnkleWorkRate_Absorption_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointAveragePower_Braking_GenerationNeutralized) )
+
+( Control_AnkleWorkRate_Absorption_SD <- sd(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointAveragePower_Braking_GenerationNeutralized) )
+
+
+( PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointAveragePower_Braking_GenerationNeutralized)-1) * ATx_AnkleWorkRate_Absorption_SD^2  ) + ( (length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointAveragePower_Braking_GenerationNeutralized)-1) * Control_AnkleWorkRate_Absorption_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointAveragePower_Braking_GenerationNeutralized) + length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointAveragePower_Braking_GenerationNeutralized)-2) ) )
+
+
+#Effect size * PooledSD to find needed MeanDiff
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+
+#Find ATx group predicted mean
+-5 - MeanDiff
+
+```
+
+
+
+```{r WorkRate Generation}
+
+( ATx_AnkleWorkRate_Generation_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointAveragePower_Propulsion_AbsorptionNeutralized) )
+
+( Control_AnkleWorkRate_Generation_SD <- sd(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointAveragePower_Propulsion_AbsorptionNeutralized) )
+
+( PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointAveragePower_Propulsion_AbsorptionNeutralized)-1) * ATx_AnkleWorkRate_Generation_SD^2  ) + ( (length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointAveragePower_Propulsion_AbsorptionNeutralized)-1) * Control_AnkleWorkRate_Generation_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointAveragePower_Propulsion_AbsorptionNeutralized) + length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointAveragePower_Propulsion_AbsorptionNeutralized)-2) ) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+#Find ATx predicted mean
+5 - MeanDiff
+
+```
+
+
+
+
+```{r %WorkRate Absorption}
+
+( ATx_AnkleWorkRateContribution_Absorption_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointContribution_AveragePower_GenerationNeutralized) )
+
+( Control_AnkleWorkRateContribution_Absorption_SD <- sd(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointContribution_AveragePower_GenerationNeutralized) )
+
+( PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointContribution_AveragePower_GenerationNeutralized)-1) * ATx_AnkleWorkRateContribution_Absorption_SD^2  ) + ( (length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointContribution_AveragePower_GenerationNeutralized)-1) * Control_AnkleWorkRateContribution_Absorption_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointContribution_AveragePower_GenerationNeutralized) + length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointContribution_AveragePower_GenerationNeutralized)-2) ) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+#Find predicted ATx group mean
+75 - MeanDiff
+
+```
+
+
+
+
+```{r %WorkRate Generation}
+
+( ATx_AnkleWorkRateContribution_Generation_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointContribution_AveragePower_AbsorptionNeutralized) )
+
+( Control_AnkleWorkRateContribution_Generation_SD <- sd(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointContribution_AveragePower_AbsorptionNeutralized) )
+
+( PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointContribution_AveragePower_AbsorptionNeutralized)-1) * ATx_AnkleWorkRateContribution_Generation_SD^2  ) + ( (length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointContribution_AveragePower_AbsorptionNeutralized)-1) * Control_AnkleWorkRateContribution_Generation_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_JointContribution_AveragePower_AbsorptionNeutralized) + length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_JointContribution_AveragePower_AbsorptionNeutralized)-2) ) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+#Find predicted ATx group mean
+75 - MeanDiff
+
+```
+
+
+
+
+```{r MEE Absorption}
+
+( ATx_AnkleMEE_Absorption_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Absorption_MEE) )
+
+( Control_AnkleMEE_Absorption_SD <- sd(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Absorption_MEE) )
+
+PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Absorption_MEE)-1) * ATx_AnkleMEE_Absorption_SD^2  ) + ( (length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Absorption_MEE)-1) * Control_AnkleMEE_Absorption_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Absorption_MEE) + length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Absorption_MEE)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+
+#Find ATx group predicted mean
+0.7 - MeanDiff
+
+```
+
+
+```{r MEE Generation}
+
+( ATx_AnkleMEE_Generation_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Generation_MEE) )
+
+( Control_AnkleMEE_Generation_SD <- sd(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Generation_MEE) )
+
+PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Generation_MEE)-1) * ATx_AnkleMEE_Generation_SD^2  ) + ( (length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Generation_MEE)-1) * Control_AnkleMEE_Generation_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Generation_MEE) + length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Generation_MEE)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+#Find ATx predicted mean
+0.7 - MeanDiff
+
+```
+
+
+
+
+```{r %MEE Absorption}
+
+( ATx_AnkleMEE_Absorption_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Percent_MEE_Absorption) )
+
+( Control_AnkleMEE_Absorption_SD <- sd(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Percent_MEE_Absorption) )
+
+PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Percent_MEE_Absorption)-1) * ATx_AnkleMEE_Absorption_SD^2  ) + ( (length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Percent_MEE_Absorption)-1) * Control_AnkleMEE_Absorption_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Percent_MEE_Absorption) + length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Percent_MEE_Absorption)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+#Find predicted ATx group mean
+75 - MeanDiff*100
+
+```
+
+
+
+
+```{r %MEE Generation}
+
+( ATx_AnkleMEE_Generation_SD <- sd(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Percent_MEE_Generation) )
+
+( Control_AnkleMEE_Generation_SD <- sd(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Percent_MEE_Generation) )
+
+PooledSD <- sqrt( ( ( (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Percent_MEE_Generation)-1) * ATx_AnkleMEE_Generation_SD^2  ) + ( (length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Percent_MEE_Generation)-1) * Control_AnkleMEE_Generation_SD^2  )  ) / (length(Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$Mean_Joint_Percent_MEE_Generation) + length(Power_ParticipantMeans_Control_MatchedDominanceAnkle_2.3Hz$Mean_Joint_Percent_MEE_Generation)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+#Find predicted ATx group mean
+75 - MeanDiff*100
+
+```
+
+
+##### Foot Net Work Rate
+```{r Braking}
+
+( ATx_FootNetWorkRate_Braking_SD <- sd(EnergyFlow_ParticipantMeans_DistalFootOnly_ATxInvolvedLimb_2.3Hz$Mean_SegmentAverageEnergy_Braking) )
+
+( Control_FootNetWorkRate_Braking_SD <- sd(EnergyFlow_ParticipantMeans_DistalFootOnly_ControlMatchedDominance_2.3Hz$Mean_SegmentAverageEnergy_Braking) )
+
+
+( PooledSD <- sqrt( ( ( (length(EnergyFlow_ParticipantMeans_DistalFootOnly_ATxInvolvedLimb_2.3Hz$Mean_SegmentAverageEnergy_Braking)-1) * ATx_FootNetWorkRate_Braking_SD^2  ) + ( (length(EnergyFlow_ParticipantMeans_DistalFootOnly_ControlMatchedDominance_2.3Hz$Mean_SegmentAverageEnergy_Braking)-1) * Control_FootNetWorkRate_Braking_SD^2  )  ) / (length(EnergyFlow_ParticipantMeans_DistalFootOnly_ATxInvolvedLimb_2.3Hz$Mean_SegmentAverageEnergy_Braking) + length(EnergyFlow_ParticipantMeans_DistalFootOnly_ControlMatchedDominance_2.3Hz$Mean_SegmentAverageEnergy_Braking)-2) ) )
+
+
+#Effect size * PooledSD to find needed MeanDiff
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+
+#Find ATx group predicted mean
+-0.1 - MeanDiff
+
+```
+
+
+##### Shank Net Work Rate
+```{r Braking}
+
+( ATx_ShankNetWorkRate_Braking_SD <- sd(EnergyFlow_ParticipantMeans_ProximalShankOnly_ATxInvolvedLimb_2.3Hz$Mean_SegmentAverageEnergy_Braking) )
+
+( Control_ShankNetWorkRate_Braking_SD <- sd(EnergyFlow_ParticipantMeans_ProximalShankOnly_ControlMatchedDominance_2.3Hz$Mean_SegmentAverageEnergy_Braking) )
+
+
+( PooledSD <- sqrt( ( ( (length(EnergyFlow_ParticipantMeans_ProximalShankOnly_ATxInvolvedLimb_2.3Hz$Mean_SegmentAverageEnergy_Braking)-1) * ATx_ShankNetWorkRate_Braking_SD^2  ) + ( (length(EnergyFlow_ParticipantMeans_ProximalShankOnly_ControlMatchedDominance_2.3Hz$Mean_SegmentAverageEnergy_Braking)-1) * Control_ShankNetWorkRate_Braking_SD^2  )  ) / (length(EnergyFlow_ParticipantMeans_ProximalShankOnly_ATxInvolvedLimb_2.3Hz$Mean_SegmentAverageEnergy_Braking) + length(EnergyFlow_ParticipantMeans_ProximalShankOnly_ControlMatchedDominance_2.3Hz$Mean_SegmentAverageEnergy_Braking)-2) ) )
+
+
+#Effect size * PooledSD to find needed MeanDiff
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+
+#Find ATx group predicted mean
+-0.1 - MeanDiff
+
+```
+
+
+
+##### Thigh Net Work Rate
+```{r Braking}
+
+( ATx_ThighNetWorkRate_Braking_SD <- sd(EnergyFlow_ParticipantMeans_ProximalThighOnly_ATxInvolvedLimb_2.3Hz$Mean_SegmentAverageEnergy_Braking) )
+
+( Control_ThighNetWorkRate_Braking_SD <- sd(EnergyFlow_ParticipantMeans_ProximalThighOnly_ControlMatchedDominance_2.3Hz$Mean_SegmentAverageEnergy_Braking) )
+
+
+( PooledSD <- sqrt( ( ( (length(EnergyFlow_ParticipantMeans_ProximalThighOnly_ATxInvolvedLimb_2.3Hz$Mean_SegmentAverageEnergy_Braking)-1) * ATx_ThighNetWorkRate_Braking_SD^2  ) + ( (length(EnergyFlow_ParticipantMeans_ProximalThighOnly_ControlMatchedDominance_2.3Hz$Mean_SegmentAverageEnergy_Braking)-1) * Control_ThighNetWorkRate_Braking_SD^2  )  ) / (length(EnergyFlow_ParticipantMeans_ProximalThighOnly_ATxInvolvedLimb_2.3Hz$Mean_SegmentAverageEnergy_Braking) + length(EnergyFlow_ParticipantMeans_ProximalThighOnly_ControlMatchedDominance_2.3Hz$Mean_SegmentAverageEnergy_Braking)-2) ) )
+
+
+#Effect size * PooledSD to find needed MeanDiff
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+
+#Find ATx group predicted mean
+-0.1 - MeanDiff
+
+```
+
+
+
+##### Thigh Transfer Work Rate
+```{r Braking}
+
+( ATx_ThighTransferWorkRate_Braking_SD <- sd(EnergyFlow_ParticipantMeans_DistalShankOnly_ATxInvolvedLimb_2.3Hz$Mean_JointAverageTotalPowerTransfer_Braking) )
+
+( Control_ThighTransferWorkRate_Braking_SD <- sd(EnergyFlow_ParticipantMeans_DistalShankOnly_ControlMatchedDominance_2.3Hz$Mean_JointAverageTotalPowerTransfer_Braking) )
+
+
+( PooledSD <- sqrt( ( ( (length(EnergyFlow_ParticipantMeans_DistalShankOnly_ATxInvolvedLimb_2.3Hz$Mean_JointAverageTotalPowerTransfer_Braking)-1) * ATx_ThighTransferWorkRate_Braking_SD^2  ) + ( (length(EnergyFlow_ParticipantMeans_DistalShankOnly_ControlMatchedDominance_2.3Hz$Mean_JointAverageTotalPowerTransfer_Braking)-1) * Control_ThighTransferWorkRate_Braking_SD^2  )  ) / (length(EnergyFlow_ParticipantMeans_DistalShankOnly_ATxInvolvedLimb_2.3Hz$Mean_JointAverageTotalPowerTransfer_Braking) + length(EnergyFlow_ParticipantMeans_DistalShankOnly_ControlMatchedDominance_2.3Hz$Mean_JointAverageTotalPowerTransfer_Braking)-2) ) )
+
+
+#Effect size * PooledSD to find needed MeanDiff
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+
+#Find ATx group predicted mean
+-3 - MeanDiff
+
+```
+
+
+##### Foot Transfer Work Rate
+```{r Propulsion}
+
+( ATx_FootTransferWorkRate_Propulsion_SD <- sd(EnergyFlow_ParticipantMeans_DistalFootOnly_ATxInvolvedLimb_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion) )
+
+( Control_FootTransferWorkRate_Propulsion_SD <- sd(EnergyFlow_ParticipantMeans_DistalFootOnly_ControlMatchedDominance_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion) )
+
+
+( PooledSD <- sqrt( ( ( (length(EnergyFlow_ParticipantMeans_DistalFootOnly_ATxInvolvedLimb_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion)-1) * ATx_FootTransferWorkRate_Propulsion_SD^2  ) + ( (length(EnergyFlow_ParticipantMeans_DistalFootOnly_ControlMatchedDominance_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion)-1) * Control_FootTransferWorkRate_Propulsion_SD^2  )  ) / (length(EnergyFlow_ParticipantMeans_DistalFootOnly_ATxInvolvedLimb_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion) + length(EnergyFlow_ParticipantMeans_DistalFootOnly_ControlMatchedDominance_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion)-2) ) )
+
+
+#Effect size * PooledSD to find needed MeanDiff
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+
+#Find ATx group predicted mean
+5 - MeanDiff
+
+```
+
+
+
+
+##### Shank Transfer Work Rate
+```{r Propulsion}
+
+( ATx_ShankTransferWorkRate_Propulsion_SD <- sd(EnergyFlow_ParticipantMeans_DistalShankOnly_ATxInvolvedLimb_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion) )
+
+( Control_ShankTransferWorkRate_Propulsion_SD <- sd(EnergyFlow_ParticipantMeans_DistalShankOnly_ControlMatchedDominance_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion) )
+
+
+( PooledSD <- sqrt( ( ( (length(EnergyFlow_ParticipantMeans_DistalShankOnly_ATxInvolvedLimb_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion)-1) * ATx_ShankTransferWorkRate_Propulsion_SD^2  ) + ( (length(EnergyFlow_ParticipantMeans_DistalShankOnly_ControlMatchedDominance_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion)-1) * Control_ShankTransferWorkRate_Propulsion_SD^2  )  ) / (length(EnergyFlow_ParticipantMeans_DistalShankOnly_ATxInvolvedLimb_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion) + length(EnergyFlow_ParticipantMeans_DistalShankOnly_ControlMatchedDominance_2.3Hz$Mean_JointAverageTotalPowerTransfer_Propulsion)-2) ) )
+
+
+#Effect size * PooledSD to find needed MeanDiff
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+
+#Find ATx group predicted mean
+5.5 - MeanDiff
+
+```
+
+
+
+
+
+##### EMG
+```{r TS Contribution Absorption}
+
+( ATx_ShankNetWorkRate_Braking_SD <- sd(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_BrakingPhase) )
+
+( Control_ShankNetWorkRate_Braking_SD <- sd(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_TSContributiontoPFActivity_BrakingPhase) )
+
+PooledSD <- sqrt( ( ( (length(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_BrakingPhase)-1) * ATx_ShankNetWorkRate_Braking_SD^2  ) + ( (length(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_TSContributiontoPFActivity_BrakingPhase)-1) * Control_ShankNetWorkRate_Braking_SD^2  )  ) / (length(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_BrakingPhase) + length(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_TSContributiontoPFActivity_BrakingPhase)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+#Find predicted ATx group mean
+70 - MeanDiff
+
+```
+
+
+
+
+```{r TS Contribution Generation}
+
+( ATx_AnkleMEE_Generation_SD <- sd(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase) )
+
+( Control_AnkleMEE_Generation_SD <- sd(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase) )
+
+PooledSD <- sqrt( ( ( (length(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase)-1) * ATx_AnkleMEE_Generation_SD^2  ) + ( (length(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase)-1) * Control_AnkleMEE_Generation_SD^2  )  ) / (length(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase) + length(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_TSContributiontoPFActivity_PropulsionPhase)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+(Mean1 <- MeanDiff*1.5)
+
+(Mean2 <- MeanDiff*.5)
+
+#Find predicted ATx group mean
+70 - MeanDiff
+
+```
+
+
+
+```{r Gastroc Contribution to TS Absorption}
+
+( ATx_ThighNetWorkRate_Braking_SD <- sd(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase) )
+
+( Control_ThighNetWorkRate_Braking_SD <- sd(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase) )
+
+PooledSD <- sqrt( ( ( (length(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase)-1) * ATx_ThighNetWorkRate_Braking_SD^2  ) + ( (length(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase)-1) * Control_ThighNetWorkRate_Braking_SD^2  )  ) / (length(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase) + length(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_BrakingPhase)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+#Find predicted ATx group mean
+0.65 - MeanDiff
+
+```
+
+
+
+
+```{r Gastroc Contribution to TS Generation}
+
+( ATx_AnkleMEE_Generation_SD <- sd(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase) )
+
+( Control_AnkleMEE_Generation_SD <- sd(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase) )
+
+PooledSD <- sqrt( ( ( (length(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase)-1) * ATx_AnkleMEE_Generation_SD^2  ) + ( (length(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase)-1) * Control_AnkleMEE_Generation_SD^2  )  ) / (length(Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase) + length(Dissertation_CombinedMEEandEMG_2.3Hz_ControlAnkle$Mean_GastrocnemiiContributiontoAllTS_PropulsionPhase)-2) )
+
+ ( MeanDiff = 0.8*PooledSD )
+
+#Find predicted ATx group mean
+0.65 - MeanDiff
+
+```
+
+
+
+
+
+
+#### Linear Regression
+
+##### vs Group ID
+```{r Absorption Work Rate}
+
+
+
+#Relation of TS activation and Group ID on ankle MEE, during braking phase.
+AnkleWorkRatevsGroup_Braking <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = JointAveragePower_Braking_GenerationNeutralized ~ Group_ID )
+
+summary( AnkleWorkRatevsGroup_Braking )
+
+
+#Find correlation between Ankle WorkRate during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsGroup_Braking <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = JointAveragePower_Braking_GenerationNeutralized ~ Group_ID )
+
+LMSummary <- summary( AnkleWorkRatevsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle WorkRate during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Braking <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = JointAveragePower_Braking_GenerationNeutralized ~ TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r Generation Work Rate}
+
+
+
+#Relation of TS activation and Group ID on ankle WorkRate, during braking phase.
+AnkleWorkRatevsGroup_Propulsion <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = JointAveragePower_Propulsion_AbsorptionNeutralized ~ Group_ID )
+
+summary( AnkleWorkRatevsGroup_Propulsion )
+
+
+
+#Find correlation between Ankle WorkRate during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsGroup_Propulsion <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = Mean_JointAveragePower_Propulsion_AbsorptionNeutralized ~ Group_ID )
+
+LMSummary <- summary( AnkleWorkRatevsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle WorkRate during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Propulsion <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = JointAveragePower_Propulsion_AbsorptionNeutralized ~ TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleWorkRatevsTSContribution_Propulsion$residuals^2 )/( sum( ( Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz$JointAveragePower_Propulsion_AbsorptionNeutralized - mean( Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz$JointAveragePower_Propulsion_AbsorptionNeutralized ) )^2 ) ) ) )
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+
+```{r % Absorption Work Rate}
+
+
+
+
+#Relation of TS activation and Group ID on ankle contribution to WorkRate, during braking phase.
+AnkleWorkRatevsGroup_Braking <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_GenerationNeutralized ~ Group_ID )
+
+summary( AnkleWorkRatevsGroup_Braking )
+
+
+#Find correlation between Ankle contribution to WorkRate during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsGroup_Braking <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = Mean_JointContribution_AveragePower_GenerationNeutralized ~ Group_ID )
+
+LMSummary <- summary( AnkleWorkRatevsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to WorkRate during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Braking <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_GenerationNeutralized ~ TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r % Generation Work Rate}
+
+#Relation of TS activation and Group ID on ankle contribution to WorkRate, during Propulsion phase.
+AnkleWorkRatevsGroup_Propulsion <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_AbsorptionNeutralized ~ Group_ID )
+
+summary( AnkleWorkRatevsGroup_Propulsion )
+
+
+#Find correlation between Ankle contribution to WorkRate during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsGroup_Propulsion <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = Mean_JointContribution_AveragePower_AbsorptionNeutralized ~ Group_ID )
+
+LMSummary <- summary( AnkleWorkRatevsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to WorkRate during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Propulsion <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_AbsorptionNeutralized ~ TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleWorkRatevsTSContribution_Propulsion$residuals^2 )/( sum( ( Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz$JointContribution_AveragePower_AbsorptionNeutralized - mean( Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz$JointContribution_AveragePower_AbsorptionNeutralized ) )^2 ) ) ) )
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Power_ParticipantMeans_1LimbPer2Groups_Ankle_2.3Hz, formula = TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+```{r MEE Absorption}
+
+
+
+#Relation of TS activation and Group ID on ankle MEE, during braking phase.
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Mean_TSContributiontoPFActivity_BrakingPhase*Group_ID )
+
+summary( AnkleMEEvsGroup_Braking )
+
+
+#Find correlation between Ankle MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle MEE during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Mean_TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r MEE Generation}
+
+#Relation of TS activation and Group ID on ankle MEE, during braking phase.
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Mean_TSContributiontoPFActivity_PropulsionPhase*Group_ID )
+
+summary( AnkleMEEvsGroup_Propulsion )
+
+
+
+#Find correlation between Ankle MEE during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle MEE during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Mean_TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleMEEvsTSContribution_Propulsion$residuals^2 )/( sum( ( Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Generation_MEE - mean( Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Generation_MEE ) )^2 ) ) ) )
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+
+```{r %MEE Absorption}
+
+#Relation of TS activation and Group ID on ankle contribution to MEE, during braking phase.
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Mean_TSContributiontoPFActivity_BrakingPhase*Group_ID )
+
+summary( AnkleMEEvsGroup_Braking )
+
+
+#Find correlation between Ankle contribution to MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to MEE during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Mean_TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r %MEE Generation}
+
+#Relation of TS activation and Group ID on ankle contribution to MEE, during Propulsion phase.
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Mean_TSContributiontoPFActivity_PropulsionPhase*Group_ID )
+
+summary( AnkleMEEvsGroup_Propulsion )
+
+
+#Find correlation between Ankle contribution to MEE during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to MEE during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Mean_TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleMEEvsTSContribution_Propulsion$residuals^2 )/( sum( ( Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Percent_MEE_Generation - mean( Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Percent_MEE_Generation ) )^2 ) ) ) )
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+##### vs ATx Morphology
+```{r Absorption Work Rate}
+
+
+
+#Relation of TS activation and Group ID on ankle MEE, during braking phase.
+AnkleWorkRatevsGroup_Braking <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = Mean_JointAveragePower_Braking_GenerationNeutralized ~ Mean_BetweenLimbTendonThickness_mm )
+
+summary( AnkleWorkRatevsGroup_Braking )
+
+
+#Find correlation between Ankle WorkRate during and Group ID, during braking phase. First, perform linear regression with Mean_BetweenLimbTendonThickness_mm as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsMacromorphology_Braking <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = Mean_JointAveragePower_Braking_GenerationNeutralized ~ Mean_BetweenLimbTendonThickness_mm )
+
+LMSummary <- summary( AnkleWorkRatevsMacromorphology_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Mixed effects model for effect of group on ankle absorption work rate
+MME_AnkleWorkRatevsGroup_Braking <- lme(fixed=JointAveragePower_Braking_GenerationNeutralized~Group_ID, data=Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz,random= ~1|Participant_ID,method='REML') 
+
+#Use summary to find the correlate between response and predictor. For G*Power, use Exact --> Linear multiple regression: Random model. Set null hypothesis squared correlation coefficient to 0
+summary( MME_AnkleWorkRatevsGroup_Braking )
+
+
+#Find correlation between Ankle WorkRate during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Braking <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = JointAveragePower_Braking_GenerationNeutralized ~ TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r Generation Work Rate}
+
+
+
+#Relation of TS activation and Group ID on ankle WorkRate, during braking phase.
+AnkleWorkRatevsMacromorphology_Propulsion <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = JointAveragePower_Propulsion_AbsorptionNeutralized ~ Mean_BetweenLimbTendonThickness_mm )
+
+summary( AnkleWorkRatevsMacromorphology_Propulsion )
+
+
+
+#Find correlation between Ankle WorkRate during and Group ID, during propulsion phase. First, perform linear regression with Mean_BetweenLimbTendonThickness_mm as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsMacromorphology_Propulsion <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = Mean_JointAveragePower_Propulsion_AbsorptionNeutralized ~ Mean_BetweenLimbTendonThickness_mm )
+
+LMSummary <- summary( AnkleWorkRatevsMacromorphology_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle WorkRate during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Propulsion <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = JointAveragePower_Propulsion_AbsorptionNeutralized ~ TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleWorkRatevsTSContribution_Propulsion$residuals^2 )/( sum( ( Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$JointAveragePower_Propulsion_AbsorptionNeutralized - mean( Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$JointAveragePower_Propulsion_AbsorptionNeutralized ) )^2 ) ) ) )
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+
+```{r % Absorption Work Rate}
+
+
+
+#Relation of TS activation and Group ID on ankle contribution to WorkRate, during braking phase.
+AnkleWorkRatevsMacromorphology_Braking <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = JointContribution_AveragePower_GenerationNeutralized ~ Mean_BetweenLimbTendonThickness_mm )
+
+summary( AnkleWorkRatevsMacromorphology_Braking )
+
+
+#Find correlation between Ankle contribution to WorkRate during and Group ID, during braking phase. First, perform linear regression with Mean_BetweenLimbTendonThickness_mm as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsMacromorphology_Braking <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = Mean_JointContribution_AveragePower_GenerationNeutralized ~ Mean_BetweenLimbTendonThickness_mm )
+
+LMSummary <- summary( AnkleWorkRatevsMacromorphology_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to WorkRate during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Braking <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = JointContribution_AveragePower_GenerationNeutralized ~ TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r % Generation Work Rate}
+
+#Relation of TS activation and Group ID on ankle contribution to WorkRate, during Propulsion phase.
+AnkleWorkRatevsMacromorphology_Propulsion <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = JointContribution_AveragePower_AbsorptionNeutralized ~ Mean_BetweenLimbTendonThickness_mm )
+
+summary( AnkleWorkRatevsMacromorphology_Propulsion )
+
+
+#Find correlation between Ankle contribution to WorkRate during and Group ID, during propulsion phase. First, perform linear regression with Mean_BetweenLimbTendonThickness_mm as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsMacromorphology_Propulsion <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = Mean_JointContribution_AveragePower_AbsorptionNeutralized ~ Mean_BetweenLimbTendonThickness_mm )
+
+LMSummary <- summary( AnkleWorkRatevsMacromorphology_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to WorkRate during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Propulsion <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = JointContribution_AveragePower_AbsorptionNeutralized ~ TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleWorkRatevsTSContribution_Propulsion$residuals^2 )/( sum( ( Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$JointContribution_AveragePower_AbsorptionNeutralized - mean( Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz$JointContribution_AveragePower_AbsorptionNeutralized ) )^2 ) ) ) )
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Power_ParticipantMeans_ATxInvolvedAnkle_2.3Hz, formula = TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+#### Mixed Effects Models
+
+##### vs Group ID
+```{r Absorption Work Rate}
+
+
+
+#Relation of TS activation and Group ID on ankle MEE, during braking phase.
+AnkleWorkRatevsGroup_Braking <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointAveragePower_Braking_GenerationNeutralized ~ Group_ID )
+
+summary( AnkleWorkRatevsGroup_Braking )
+
+
+#Find correlation between Ankle WorkRate during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsGroup_Braking <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointAveragePower_Braking_GenerationNeutralized ~ Group_ID )
+
+LMSummary <- summary( AnkleWorkRatevsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Mixed effects model for effect of group on ankle absorption work rate
+MME_AnkleWorkRatevsGroup_Braking <- lme(fixed=JointAveragePower_Braking_GenerationNeutralized~Group_ID, data=Power_1LimbPer3Groups_Ankle_2.3Hz,random= ~1|Participant_ID,method='REML') 
+
+#Use summary to find the correlate between response and predictor. For G*Power, use Exact --> Linear multiple regression: Random model. Set null hypothesis squared correlation coefficient to 0
+summary( MME_AnkleWorkRatevsGroup_Braking )
+
+
+#Find correlation between Ankle WorkRate during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Braking <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointAveragePower_Braking_GenerationNeutralized ~ TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r Generation Work Rate}
+
+
+
+#Mixed effects model for effect of group on ankle generation work rate
+MME_AnkleWorkRatevsGroup_Propulsion <- lme(fixed=JointAveragePower_Propulsion_AbsorptionNeutralized~Group_ID, data=Power_1LimbPer3Groups_Ankle_2.3Hz,random= ~1|Participant_ID,method='REML') 
+
+#Use summary to find the correlate between response and predictor. For G*Power, use Exact --> Linear multiple regression: Random model. Set null hypothesis squared correlation coefficient to 0
+summary( MME_AnkleWorkRatevsGroup_Propulsion )
+
+
+
+#Relation of TS activation and Group ID on ankle WorkRate, during braking phase.
+AnkleWorkRatevsGroup_Propulsion <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointAveragePower_Propulsion_AbsorptionNeutralized ~ Group_ID )
+
+summary( AnkleWorkRatevsGroup_Propulsion )
+
+
+
+#Find correlation between Ankle WorkRate during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsGroup_Propulsion <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointAveragePower_Propulsion_AbsorptionNeutralized ~ Group_ID )
+
+LMSummary <- summary( AnkleWorkRatevsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle WorkRate during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Propulsion <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointAveragePower_Propulsion_AbsorptionNeutralized ~ TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleWorkRatevsTSContribution_Propulsion$residuals^2 )/( sum( ( Power_1LimbPer3Groups_Ankle_2.3Hz$JointAveragePower_Propulsion_AbsorptionNeutralized - mean( Power_1LimbPer3Groups_Ankle_2.3Hz$JointAveragePower_Propulsion_AbsorptionNeutralized ) )^2 ) ) ) )
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+
+```{r % Absorption Work Rate}
+
+
+
+#Mixed effects model for effect of group on ankle absorption work rate contribution
+MME_AnkleWorkRateContributionvsGroup_Braking <- lme(fixed=JointContribution_AveragePower_GenerationNeutralized~Group_ID, data=Power_1LimbPer3Groups_Ankle_2.3Hz,random= ~1|Participant_ID,method='REML') 
+
+#Use summary to find the correlate between response and predictor. For G*Power, use Exact --> Linear multiple regression: Random model. Set null hypothesis squared correlation coefficient to 0
+summary( MME_AnkleWorkRateContributionvsGroup_Braking )
+
+
+
+#Relation of TS activation and Group ID on ankle contribution to WorkRate, during braking phase.
+AnkleWorkRatevsGroup_Braking <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_GenerationNeutralized ~ Group_ID )
+
+summary( AnkleWorkRatevsGroup_Braking )
+
+
+#Find correlation between Ankle contribution to WorkRate during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsGroup_Braking <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_GenerationNeutralized ~ Group_ID )
+
+LMSummary <- summary( AnkleWorkRatevsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to WorkRate during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Braking <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_GenerationNeutralized ~ TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+
+```{r % Generation Work Rate}
+
+#Relation of TS activation and Group ID on ankle contribution to WorkRate, during Propulsion phase.
+AnkleWorkRatevsGroup_Propulsion <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_AbsorptionNeutralized ~ Group_ID )
+
+summary( AnkleWorkRatevsGroup_Propulsion )
+
+
+#Find correlation between Ankle contribution to WorkRate during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsGroup_Propulsion <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_AbsorptionNeutralized ~ Group_ID )
+
+LMSummary <- summary( AnkleWorkRatevsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to WorkRate during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleWorkRatevsTSContribution_Propulsion <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = JointContribution_AveragePower_AbsorptionNeutralized ~ TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleWorkRatevsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+(R2 <- 1 - ( sum( AnkleWorkRatevsTSContribution_Propulsion$residuals^2 )/( sum( ( Power_1LimbPer3Groups_Ankle_2.3Hz$JointContribution_AveragePower_AbsorptionNeutralized - mean( Power_1LimbPer3Groups_Ankle_2.3Hz$JointContribution_AveragePower_AbsorptionNeutralized ) )^2 ) ) ) )
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Power_1LimbPer3Groups_Ankle_2.3Hz, formula = TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+```
+
+
+### Hopping Rate Comparison
+
+#### Regression
+
+##### MEE As Outcome
+```{r MEE Absorption}
+
+
+##Use Linear Multiple Regression: Fixed Model, R2 deviation from zero (G*Power)
+
+
+
+
+#Find correlation between Ankle MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Group_ID * HoppingRate_ID + Group_ID * Mean_TSContributiontoPFActivity_BrakingPhase + HoppingRate_ID * Mean_TSContributiontoPFActivity_BrakingPhase  )
+
+(LMSummary <- summary( AnkleMEEvsGroup_Braking ) )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+
+#Find correlation between Ankle MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+#Find correlation between Ankle MEE during and Hopping Rate ID, during braking phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsHoppingRate_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ HoppingRate_ID )
+
+LMSummary <- summary( AnkleMEEvsHoppingRate_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle MEE during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Mean_TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+
+
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and HoppingRate_ID, during braking phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsHoppingRate <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ HoppingRate_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsHoppingRate )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+```
+
+
+
+```{r MEE Generation}
+
+
+#Find correlation between Ankle MEE and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Group_ID * HoppingRate_ID + Group_ID * Mean_TSContributiontoPFActivity_PropulsionPhase + HoppingRate_ID * Mean_TSContributiontoPFActivity_PropulsionPhase  )
+
+(LMSummary <- summary( AnkleMEEvsGroup_Propulsion ) )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+
+#Find correlation between Ankle MEE during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle MEE during and Hopping Rate ID, during Propulsion phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsHoppingRate_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ HoppingRate_ID )
+
+LMSummary <- summary( AnkleMEEvsHoppingRate_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle MEE during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Mean_TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+#Check calculation of R2
+(R2 <- 1 - ( sum( AnkleMEEvsTSContribution_Propulsion$residuals^2 )/( sum( ( Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Generation_MEE - mean( Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Generation_MEE ) )^2 ) ) ) )
+
+
+
+
+
+
+
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+#Find correlation between TS contribution to PF activation and HoppingRate_ID, during Propulsion phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsHoppingRate <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ HoppingRate_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsHoppingRate )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+```
+
+
+
+
+```{r %MEE Absorption}
+
+
+
+#Find correlation between Ankle MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Group_ID * HoppingRate_ID + Group_ID * Mean_TSContributiontoPFActivity_BrakingPhase + HoppingRate_ID * Mean_TSContributiontoPFActivity_BrakingPhase  )
+
+(LMSummary <- summary( AnkleMEEvsGroup_Braking ) )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle contribution to MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to MEE during and Hopping Rate ID, during braking phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsHoppingRate_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ HoppingRate_ID )
+
+LMSummary <- summary( AnkleMEEvsHoppingRate_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle Contribution to MEE during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Mean_TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+
+
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and HoppingRate_ID, during braking phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsHoppingRate <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ HoppingRate_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsHoppingRate )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+```
+
+
+
+```{r %MEE Generation}
+
+
+#Find correlation between Ankle MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Group_ID * HoppingRate_ID + Group_ID * Mean_TSContributiontoPFActivity_PropulsionPhase + HoppingRate_ID * Mean_TSContributiontoPFActivity_PropulsionPhase  )
+
+(LMSummary <- summary( AnkleMEEvsGroup_Propulsion ) )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle contribution to MEE during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle Contribution to MEE during and Hopping Rate ID, during Propulsion phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsHoppingRate_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ HoppingRate_ID )
+
+LMSummary <- summary( AnkleMEEvsHoppingRate_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle Contribution to MEE during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Mean_TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+#Check calculation of R2
+(R2 <- 1 - ( sum( AnkleMEEvsTSContribution_Propulsion$residuals^2 )/( sum( ( Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Percent_MEE_Generation - mean( Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Percent_MEE_Generation ) )^2 ) ) ) )
+
+
+
+
+
+
+
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and HoppingRate_ID, during Propulsion phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsHoppingRate <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ HoppingRate_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsHoppingRate )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+```
+
+
+##### TS Contribution As Outcome
+
+```{r MEE Absorption}
+
+
+##Use Linear Multiple Regression: Fixed Model, R2 deviation from zero (G*Power)
+
+
+#Relation of TS activation, Group ID, and Hopping Rate on ankle MEE, during braking phase.
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Absorption_MEE ~ Mean_TSContributiontoPFActivity_BrakingPhase*Group_ID+Mean_TSContributiontoPFActivity_BrakingPhase*HoppingRate_ID )
+
+summary( AnkleMEEvsGroup_Braking )
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable.
+TSContribution_BrakingvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and HoppingRate_ID, during braking phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable.
+TSContribution_BrakingvsHoppingRate <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ HoppingRate_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsHoppingRate )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+```
+
+
+
+```{r MEE Generation}
+
+
+#Relation of TS activation, Group ID, and Hopping Rate on ankle MEE, during braking phase.
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Mean_TSContributiontoPFActivity_PropulsionPhase*Group_ID+Mean_TSContributiontoPFActivity_PropulsionPhase*HoppingRate_ID )
+
+summary( AnkleMEEvsGroup_Propulsion )
+
+
+
+#Find correlation between Ankle MEE during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle MEE during and Hopping Rate ID, during Propulsion phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsHoppingRate_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ HoppingRate_ID )
+
+LMSummary <- summary( AnkleMEEvsHoppingRate_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle MEE during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Generation_MEE ~ Mean_TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+#Check calculation of R2
+(R2 <- 1 - ( sum( AnkleMEEvsTSContribution_Propulsion$residuals^2 )/( sum( ( Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Generation_MEE - mean( Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Generation_MEE ) )^2 ) ) ) )
+
+
+
+
+
+
+
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+#Find correlation between TS contribution to PF activation and HoppingRate_ID, during Propulsion phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsHoppingRate <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ HoppingRate_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsHoppingRate )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+```
+
+
+
+
+```{r %MEE Absorption}
+
+
+#Relation of TS activation, Group ID, and Hopping Rate on ankle contribution to MEE, during braking phase.
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Mean_TSContributiontoPFActivity_BrakingPhase*Group_ID+Mean_TSContributiontoPFActivity_BrakingPhase*HoppingRate_ID )
+
+summary( AnkleMEEvsGroup_Braking )
+
+
+#Find correlation between Ankle contribution to MEE during and Group ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+#Find correlation between Ankle Contribution to MEE during and Hopping Rate ID, during braking phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsHoppingRate_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ HoppingRate_ID )
+
+LMSummary <- summary( AnkleMEEvsHoppingRate_Braking )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle Contribution to MEE during and TS contribution to PF activation, during braking phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Braking <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Absorption ~ Mean_TSContributiontoPFActivity_BrakingPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Braking )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+
+
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during braking phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+#Find correlation between TS contribution to PF activation and HoppingRate_ID, during braking phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_BrakingvsHoppingRate <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_BrakingPhase ~ HoppingRate_ID )
+
+LMSummary <- summary( TSContribution_BrakingvsHoppingRate )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+```
+
+
+
+```{r %MEE Generation}
+
+
+#Relation of TS activation, Group ID, and Hopping Rate on ankle MEE, during braking phase.
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Mean_TSContributiontoPFActivity_PropulsionPhase*Group_ID+Mean_TSContributiontoPFActivity_PropulsionPhase*HoppingRate_ID )
+
+summary( AnkleMEEvsGroup_Propulsion )
+
+
+#Find correlation between Ankle contribution to MEE during and Group ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsGroup_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Group_ID )
+
+LMSummary <- summary( AnkleMEEvsGroup_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle Contribution to MEE during and Hopping Rate ID, during Propulsion phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsHoppingRate_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ HoppingRate_ID )
+
+LMSummary <- summary( AnkleMEEvsHoppingRate_Propulsion )
+
+sqrt( LMSummary$r.squared )
+
+
+
+
+#Find correlation between Ankle Contribution to MEE during and TS contribution to PF activation, during propulsion phase. First, perform linear regression with TS contribution as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable
+AnkleMEEvsTSContribution_Propulsion <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_Joint_Percent_MEE_Generation ~ Mean_TSContributiontoPFActivity_PropulsionPhase )
+
+LMSummary <- summary( AnkleMEEvsTSContribution_Propulsion )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+#Check calculation of R2
+(R2 <- 1 - ( sum( AnkleMEEvsTSContribution_Propulsion$residuals^2 )/( sum( ( Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Percent_MEE_Generation - mean( Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle$Mean_Joint_Percent_MEE_Generation ) )^2 ) ) ) )
+
+
+
+
+
+
+
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and Group_ID, during propulsion phase. First, perform linear regression with Group_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsGroup <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ Group_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsGroup )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+
+
+#Find correlation between TS contribution to PF activation and HoppingRate_ID, during Propulsion phase. First, perform linear regression with HoppingRate_ID as predictor. Then, save the summary of the regression results and then take the square root of the r.squared variable. This is the correlation between predictors
+TSContribution_PropulsionvsHoppingRate <- lm( data = Dissertation_CombinedMEEandEMG_2and2.3Hz_InvolvedvsControlAnkle, formula = Mean_TSContributiontoPFActivity_PropulsionPhase ~ HoppingRate_ID )
+
+LMSummary <- summary( TSContribution_PropulsionvsHoppingRate )
+
+sqrt( abs( LMSummary$r.squared ) )
+
+
+
+```
+

@@ -1,0 +1,725 @@
+---
+title: "DTOW Dissertation - EMG Time Series Illustration"
+author: "David Ortiz"
+date: "2024-04-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load Libraries
+```{r Load Libraries echo=false}
+
+library(R.matlab)
+library(ggplot2)
+library(pander)
+library(stargazer)
+library(gridExtra)
+library(ggpubr)
+library(RColorBrewer)
+library(reshape2)
+library(effsize)
+library(ggsignif)
+library(readxl)
+library(lme4)
+library(nlme)
+library(xlsx)
+library(readxl)
+library(DescTools)
+library(dplyr)
+library(MetBrewer)
+library(shadowtext)
+library(showtext)
+
+
+font_add( 'Arial Black', regular = 'Arial Black.ttf')
+font_add( family='Arial', regular = 'Arial.ttf',bold ='Arial Bold.ttf',italic ='Arial Italic.ttf', bolditalic = 'Arial Bold Italic.ttf'  )
+font_add( 'Arial Bold Italic', regular = 'Arial Bold Italic.ttf' )
+font_add( 'Arial Bold', regular = 'Arial Bold.ttf' )
+font_add( 'Arial Italic', regular = 'Arial Italic.ttf' )
+
+font_install(font_desc=list(showtext_name = 'Arial Black',font_ext='ttf',regular_url='https://learn.microsoft.com/en-us/typography/font-list/arial-black'))
+
+font_install(font_desc=list(showtext_name = 'Arial',font_ext='ttf',regular_url='https://learn.microsoft.com/en-us/typography/font-list/arial'))
+
+```
+
+
+## Load Data
+```{r HC17 Normalized EMG Data}
+
+
+HC17_NormalizedEMGData <- as.data.frame( read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/Methods Illustrations/HC17_EMGTimeSeries_MatchedDominanceLimb.xlsx' ) )
+
+
+HC17_NormalizedEMGData$Muscle_ID[which( HC17_NormalizedEMGData$Muscle_ID==1 )] <- 'MGas'
+HC17_NormalizedEMGData$Muscle_ID[which( HC17_NormalizedEMGData$Muscle_ID==2 )] <- 'LGas'
+HC17_NormalizedEMGData$Muscle_ID[which( HC17_NormalizedEMGData$Muscle_ID==3 )] <- 'Sol'
+HC17_NormalizedEMGData$Muscle_ID[which( HC17_NormalizedEMGData$Muscle_ID==4 )] <- 'PL'
+HC17_NormalizedEMGData$Muscle_ID[which( HC17_NormalizedEMGData$Muscle_ID==5 )] <- 'TA'
+
+
+
+```
+
+
+```{r ATx07 Santello-McDonagh Illustration - Flight Only }
+
+
+ATx07_FlightOnly <- as.data.frame( read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/Methods Illustrations/ATx07_SantelloMcDonaghIllustration_FlightOnly_MGas_Hop2_SelfSelectedHz.xlsx' ) )
+
+
+```
+
+
+```{r ATx07 Santello-McDonagh Illustration - Entire Hop }
+
+
+ATx07_EntireHop <- as.data.frame( read_xlsx( '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Excel/Methods Illustrations/ATx07_SantelloMcDonaghIllustration_EntireHop_MGas_Hop2_SelfSelectedHz.xlsx' ) )
+
+
+```
+
+
+
+
+## DPLYR
+
+
+
+### Split Propulsion and Braking
+
+#### HC17
+
+
+###### EMG
+
+```{r Separate Muscles}
+
+## Create new data frame for MedGas
+HC17_MGas <- HC17_NormalizedEMGData %>% filter( Muscle_ID == 'MGas' )
+
+## Create new data frame for LatGas
+HC17_LGas <- HC17_NormalizedEMGData %>% filter( Muscle_ID == 'LGas' )
+
+## Create new data frame for Sol
+HC17_Sol <- HC17_NormalizedEMGData %>% filter( Muscle_ID == 'Sol' )
+
+## Create new data frame for PL
+HC17_PL <- HC17_NormalizedEMGData %>% filter( Muscle_ID == 'PL' )
+
+## Create new data frame for TA
+HC17_TA <- HC17_NormalizedEMGData %>% filter( Muscle_ID == 'TA' )
+
+
+
+
+
+```
+
+
+
+```{r Split Negative Torque Into Each Muscle}
+
+
+##This code was for selecting the times when all Muscles showing the same direction for torque
+
+HC17_BrakingPhase_Ankle <- HC17_BrakingPhase %>% filter( Muscle_ID == 'Ankle' )
+
+HC17_BrakingPhase_Knee <- HC17_BrakingPhase %>% filter( Muscle_ID == 'Knee' )
+
+HC17_BrakingPhase_Hip <- HC17_BrakingPhase %>% filter( Muscle_ID == 'Hip' )
+
+
+
+HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque <- HC17_BrakingPhase_AllMusclesNegativeTorque %>% filter( Muscle_ID == 'Ankle' )
+
+
+HC17_BrakingPhase_Knee_AllMusclesNegativeTorque <- HC17_BrakingPhase_AllMusclesNegativeTorque %>% filter( Muscle_ID == 'Knee' )
+
+
+HC17_BrakingPhase_Hip_AllMusclesNegativeTorque <- HC17_BrakingPhase_AllMusclesNegativeTorque %>% filter( Muscle_ID == 'Hip' )
+
+
+
+
+HC17_SupportMoment_BrakingPhase = HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque$Muscle_Torque + HC17_BrakingPhase_Knee_AllMusclesNegativeTorque$Muscle_Torque + HC17_BrakingPhase_Hip_AllMusclesNegativeTorque$Muscle_Torque
+
+
+FrameofPeakSupportMoment_BrakingPhase <- HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque$FrameNum[ which( HC17_SupportMoment_BrakingPhase == min( HC17_SupportMoment_BrakingPhase ) ) ]
+
+TimeofPeakSupportMoment_BrakingPhase <- HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque$Time_sec[ which( HC17_SupportMoment_BrakingPhase == min( HC17_SupportMoment_BrakingPhase ) ) ]
+
+
+
+
+HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque_Period1 <- HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque %>% filter( FrameNum <= 20 )
+
+HC17_BrakingPhase_Knee_AllMusclesNegativeTorque_Period1 <- HC17_BrakingPhase_Knee_AllMusclesNegativeTorque %>% filter( FrameNum <= 20 )
+
+HC17_BrakingPhase_Hip_AllMusclesNegativeTorque_Period1 <- HC17_BrakingPhase_Hip_AllMusclesNegativeTorque %>% filter( FrameNum <= 20 )
+
+
+
+
+
+
+
+HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque_Period2 <- HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque %>% filter( FrameNum > 20  )
+
+HC17_BrakingPhase_Knee_AllMusclesNegativeTorque_Period2 <- HC17_BrakingPhase_Knee_AllMusclesNegativeTorque %>% filter( FrameNum > 20  )
+
+HC17_BrakingPhase_Hip_AllMusclesNegativeTorque_Period2 <- HC17_BrakingPhase_Hip_AllMusclesNegativeTorque %>% filter( FrameNum > 20  )
+
+
+
+
+
+HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque_Period1$AreaOfInterest1 <- -3.3
+HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque_Period1$AreaOfInterest2 <- 0.5
+
+
+HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque_Period2$AreaOfInterest1 <- -3.3
+HC17_BrakingPhase_Ankle_AllMusclesNegativeTorque_Period2$AreaOfInterest2 <- 0.5
+
+```
+
+
+
+
+
+## Plots
+
+### EMG Time Series
+```{r All Muscles - PhotoCopy Safe}
+
+
+(PlotSegmentPower <- ggplot( data= HC17_NormalizedEMGData, aes(x, y) ) +
+    
+
+   #Create a vertical line to signify the division between flight and ground contact phases
+  geom_vline( xintercept = HC17_NormalizedEMGData$BeginGContact_s[1], linewidth = 2 )+
+
+      #Horizontal arrow to direct geom_text to vertical line separating flight and ground contact phases
+    geom_segment( aes(x = 0.11,
+                            y = 78,
+                            xend = 0.095,
+                            yend = 78), color='black',
+                     na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  #Label to indicate meaning of vertical line
+  geom_text( label = 'Begin Ground Contact', size = 14, aes( x = 0.16375, y = 78), fontface = 'bold', family = 'Arial Bold'  )+
+    
+    
+    
+   #Create a vertical line to signify the division between braking and propulsion phases
+  geom_vline( xintercept = HC17_NormalizedEMGData$TimeofMinL5S1_s[1], linewidth = 2 )+
+  
+      #Horizontal arrow to direct geom_text to vertical line separating braking and propulsion phases
+    geom_segment( aes(x = 0.28,
+                            y = 78,
+                            xend = 0.2625,
+                            yend = 78), color='black',
+                     na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  #Label to indicate meaning of vertical line
+  geom_text( label = 'Begin Propulsion \n Phase', size = 14, aes( x = 0.32, y = 78), fontface = 'bold', family = 'Arial Bold'  )+
+    
+    
+    
+    #Shade the area under the muscle EMG curves      
+             geom_line( data = HC17_NormalizedEMGData, aes( x = Time_s,  y = NormalizedEMGTimeSeries, group = Muscle_ID), color = 'white', linewidth = 12 ) +
+    
+    
+#Shade the area under the muscle EMG curves      
+             geom_line( data = HC17_NormalizedEMGData, aes( x = Time_s,  y = NormalizedEMGTimeSeries, color = Muscle_ID, group = Muscle_ID), linewidth = 9 ) +
+   
+
+  
+  
+   
+   
+##Add Muscle Labels   
+  geom_text( label = 'MGas', size = 17, aes( x = 0.185, y = 39.5, color = 'MGas' ), fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'LGas', size = 17, aes( x = 0.3275, y = 66, color = 'LGas' ), fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'Sol', size = 17, aes( x = 0.14, y = 10, color = 'Sol' ), fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'PL', size = 17, aes( x = 0.235, y = 48, color = 'PL' ), fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'TA', size = 17, aes( x = 0.035, y = 44.5, color = 'TA' ), fontface = 'bold', family = 'Arial Bold'  )+
+   
+   
+      
+      
+            
+    scale_y_continuous( breaks = seq( 0, 80, by = 10 ), limits = c( 0, 80 ) )+
+          
+     scale_x_continuous( breaks = seq( 0, 0.45, by = 0.05 ), limits = c( 0, 0.45 ) )+    
+
+
+    
+    labs( title = 'Muscle Normalized Activation Time Series', x = 'Time (sec)', y = 'Normalized Activation (% Reference Contraction)' ) +
+    
+   
+    guides( fill = 'none', shape = 'none', linetype = 'none', color = 'none' )+
+      
+      
+
+          
+                scale_color_manual(values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ), aesthetics = c( 'color' ) ) +
+   
+   
+          
+scale_fill_manual( values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ),
+      name = 'Muscle ID', aesthetics=c('fill')  ) +
+    
+
+   
+   
+    theme(plot.title = element_text(size = 46,hjust = 0.5,face = 'bold', family = 'Arial Bold' ),
+      plot.background  =  element_rect(fill=rgb(245, 245, 220, maxColorValue = 255)),
+                axis.title.x = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.title.y.left = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+          axis.title.y.right = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+      axis.text.y.right=element_text(size=35,color='darkred',face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.text.x  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,5),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',linewidth=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255) ),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey',linewidth = 0.1),
+      strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+
+
+ggsave(  path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Methods Illustrations', 'EMGTimeSeries_MethodsIllustration.png', width = 6500, height = 6500, units = 'px' )
+
+
+
+```
+
+
+
+```{r All Muscles - PhotoCopy Safe - Area}
+
+
+(PlotSegmentPower <- ggplot( data= HC17_NormalizedEMGData, aes(x, y) ) +
+    
+
+   #Create a vertical line to signify the division between flight and ground contact phases
+  geom_vline( xintercept = HC17_NormalizedEMGData$BeginGContact_s[1], linewidth = 2 )+
+
+      #Horizontal arrow to direct geom_text to vertical line separating flight and ground contact phases
+    geom_segment( aes(x = 0.11,
+                            y = 78,
+                            xend = 0.095,
+                            yend = 78), color='black',
+                     na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  #Label to indicate meaning of vertical line
+  geom_text( label = 'Begin Ground Contact', size = 14, aes( x = 0.18375, y = 78), fontface = 'bold', family = 'Arial Bold'  )+
+    
+    
+    
+   #Create a vertical line to signify the division between braking and propulsion phases
+  geom_vline( xintercept = HC17_NormalizedEMGData$TimeofMinL5S1_s[1], linewidth = 2 )+
+  
+      #Horizontal arrow to direct geom_text to vertical line separating braking and propulsion phases
+    geom_segment( aes(x = 0.28,
+                            y = 78,
+                            xend = 0.26375,
+                            yend = 78), color='black',
+                     na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow=arrow(length=unit(0.25,'inches')), show.legend=FALSE) + 
+  
+  #Label to indicate meaning of vertical line
+  geom_text( label = 'Begin Propulsion Phase', size = 14, aes( x = 0.36375, y = 78), fontface = 'bold', family = 'Arial Bold'  )+
+    
+    
+    
+
+   
+   
+   # #Geom area for medial gastroc
+   # geom_area( data = HC17_NormalizedEMGData, aes( x = Time_s,  y = NormalizedEMGTimeSeries, fill = Muscle_ID, group = Muscle_ID) ) +
+   
+   
+   #Geom area for lateral gastroc
+   geom_area( data = HC17_LGas, aes( x = Time_s,  y = NormalizedEMGTimeSeries, fill = Muscle_ID, group = Muscle_ID), color = 'white', linewidth = 1.5 ) +
+    
+   #Geom area for PL
+   geom_area( data = HC17_PL, aes( x = Time_s,  y = NormalizedEMGTimeSeries, fill = Muscle_ID, group = Muscle_ID), color = 'white', alpha = 0.75, linewidth = 1.5 ) +
+    
+    
+   #Geom area for medial gastroc
+   geom_area( data = HC17_MGas, aes( x = Time_s,  y = NormalizedEMGTimeSeries, fill = Muscle_ID, group = Muscle_ID), color = 'white', alpha = 0.75, linewidth = 1.5 ) +
+   
+   #Geom area for Sol
+   geom_area( data = HC17_Sol, aes( x = Time_s,  y = NormalizedEMGTimeSeries, fill = Muscle_ID, group = Muscle_ID), color = 'white', alpha = 0.75, linewidth = 1.5 ) +
+   
+   #Geom area for TA
+   geom_area( data = HC17_TA, aes( x = Time_s,  y = NormalizedEMGTimeSeries, fill = Muscle_ID, group = Muscle_ID), color = 'white', alpha = 0.5, linewidth = 1.5 ) +
+  
+    # 
+    # #GeomLine      
+    #          geom_line( data = HC17_NormalizedEMGData, aes( x = Time_s,  y = NormalizedEMGTimeSeries, group = Muscle_ID), color = 'white', linewidth = 12 ) +
+    # 
+    
+# #GeomLine      
+#              geom_line( data = HC17_NormalizedEMGData, aes( x = Time_s,  y = NormalizedEMGTimeSeries, color = Muscle_ID, group = Muscle_ID), linewidth = 9 ) +
+#    
+   
+   
+##Add Muscle Labels   
+  geom_text( label = 'MGas', size = 17, aes( x = 0.185, y = 39.5, color = 'MGas' ), fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'LGas', size = 17, aes( x = 0.3275, y = 66, color = 'LGas' ), fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'Sol', size = 17, aes( x = 0.26, y = 25 ), colour = 'white', fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'PL', size = 17, aes( x = 0.235, y = 48, color = 'PL' ), fontface = 'bold', family = 'Arial Bold'  )+
+  geom_text( label = 'TA', size = 17, aes( x = 0.035, y = 44.5, color = 'TA' ), fontface = 'bold', family = 'Arial Bold'  )+
+   
+   
+      
+      
+            
+    scale_y_continuous( breaks = seq( 0, 80, by = 10 ), limits = c( 0, 80 ) )+
+          
+     scale_x_continuous( breaks = seq( 0, 0.45, by = 0.05 ), limits = c( 0, 0.45 ) )+    
+
+
+    
+    labs( title = 'Muscle Normalized Activation Time Series', x = 'Time (sec)', y = 'Normalized Activation (% Reference Contraction)' ) +
+    
+   
+    guides( fill = 'none', shape = 'none', linetype = 'none', color = 'none' )+
+      
+      
+
+          
+                scale_color_manual(values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ), aesthetics = c( 'color' ) ) +
+   
+   
+          
+scale_fill_manual( values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ),
+      name = 'Muscle ID', aesthetics=c('fill')  ) +
+    
+
+   
+   
+    theme(plot.title = element_text(size = 46,hjust = 0.5,face = 'bold', family = 'Arial Bold' ),
+      plot.background  =  element_rect(fill=rgb(245, 245, 220, maxColorValue = 255)),
+                axis.title.x = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.title.y.left = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+          axis.title.y.right = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+      axis.text.y.right=element_text(size=35,color='darkred',face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.text.x  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,5),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',linewidth=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255) ),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey',linewidth = 0.1),
+      strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+
+
+ggsave(  path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Methods Illustrations', 'EMGTimeSeries_Integration_MethodsIllustration.png', width = 6500, height = 6500, units = 'px' )
+
+
+
+```
+
+
+
+
+
+```{r ATx07 - Santello McDonagh Illustration }
+
+
+(ATx07SantelloMcDonaghPlot <- ggplot( data= ATx07_FlightOnly, aes( x = NormalizedTimeVector, y = NormalizedIntegratedEMGVector) ) +
+    
+    #Plot the integrated EMG line
+    geom_line( color = '#5e3c99', linewidth = 3 ) +
+    
+    #Plot the reference line - black outline
+    geom_line( data= ATx07_FlightOnly, aes( x = ReferenceLineX, y = ReferenceLineY), color = 'black', linewidth = 4.5 ) +
+    
+    #Plot the reference line
+    geom_line( data= ATx07_FlightOnly, aes( x = ReferenceLineX, y = ReferenceLineY), color = '#b2abd2', linewidth = 4 ) +
+
+
+   #Create a vertical line to signify the division between flight and ground contact phases
+  geom_segment( x = ATx07_FlightOnly$MaxDifferencefromReferenceLine_NormalizedTime[ 1 ], xend = ATx07_FlightOnly$MaxDifferencefromReferenceLine_NormalizedTime[ 1 ], y = ATx07_FlightOnly$ReferenceLineY[ ATx07_FlightOnly$FrameNumber_MaxDiffFromReferenceLine[ 1 ] ], yend = ATx07_FlightOnly$ReferenceLineY[ ATx07_FlightOnly$FrameNumber_MaxDiffFromReferenceLine[ 1 ] ] - ATx07_FlightOnly$MaxDifferenceFromReferenceLine[ 1 ], linewidth = 4, color = '#e66101', linetype = 'dashed' )+
+
+ 
+  
+  #Label to indicate meaning of vertical line
+  geom_text( label = 'Time of Onset = 0.09 s (0.62 s in Normalized Time)', size = 14, aes( x = 0.38, y = 0.82), fontface = 'bold', family = 'Arial Bold'  )+
+    
+    
+      
+            
+    scale_y_continuous( breaks = seq( 0, 1, by = 0.10 ), limits = c( 0, 1 ) )+
+          
+     scale_x_continuous( breaks = seq( 0, 1, by = 0.1 ), limits = c( 0, 1 ) )+    
+
+
+    
+    labs( title = 'Santello-McDonagh Onset Detection Method Illustration', x = 'Time (Normalized to Max)', y = 'Integrated EMG (Normalized to Max)' ) +
+    
+   
+    guides( fill = 'none', shape = 'none', linetype = 'none', color = 'none' )+
+      
+      
+
+          
+                scale_color_manual(values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ), aesthetics = c( 'color' ) ) +
+   
+   
+          
+scale_fill_manual( values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ),
+      name = 'Muscle ID', aesthetics=c('fill')  ) +
+    
+
+   
+   
+    theme(plot.title = element_text(size = 46,hjust = 0.5,face = 'bold', family = 'Arial Bold' ),
+      plot.background  =  element_rect(fill=rgb(245, 245, 220, maxColorValue = 255)),
+                axis.title.x = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.title.y.left = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+          axis.title.y.right = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+      axis.text.y.right=element_text(size=35,color='darkred',face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.text.x  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,5),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',linewidth=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255) ),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey',linewidth = 0.1),
+      strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+
+
+ggsave(  path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Methods Illustrations', 'SantelloMcDonaghMethodsIllustration.png', width = 6750, height = 6750, units = 'px' )
+
+
+
+```
+
+
+
+### ATx07 Rectified EMG
+
+```{r ATx07 - Flight Only }
+
+( TimeOfOnsetB4GContact <- ATx07_FlightOnly$TimeVector_s[ length( ATx07_FlightOnly$TimeVector_s ) ] - ATx07_FlightOnly$Time_MaxDiffFromReferenceLine_s[ 1 ] )
+
+
+(ATx07FlightEMGPlot <- ggplot( data= ATx07_FlightOnly, aes( x = TimeVector_s, y = RectifiedEMG) ) +
+    
+    #Plot a vertical line for pre-activation onset
+    geom_vline( xintercept = ATx07_FlightOnly$Time_MaxDiffFromReferenceLine_s[ 1 ], color = '#e66101', linewidth = 3, linetype = 'dashed' ) +
+    
+    #Plot a vertical line for ground contact phase onset
+    geom_vline( xintercept = ATx07_FlightOnly$TimeVector_s[ length( ATx07_FlightOnly$TimeVector_s ) ], color = '#e66101', linewidth = 3, linetype = 'dashed' ) +
+    
+      
+    #Plot the integrated EMG line
+    geom_line( color = '#5e3c99', linewidth = 3 ) +
+
+                      
+      
+      #Horizontal arrow pointing between pre-activation onset and ground contact onset
+    geom_segment( aes(x = ATx07_FlightOnly$TimeVector_s[ length( ATx07_FlightOnly$TimeVector_s ) ] - 0.003,
+                            y = 630,
+                            xend = ATx07_FlightOnly$Time_MaxDiffFromReferenceLine_s[ 1 ] + 0.003,
+                            yend = 630), color='black',
+                     na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow = arrow( length = unit( 0.25,'inches'), ends = 'both' ), show.legend=FALSE) + 
+  
+  #Label with value of pre-activation onset.
+  geom_text( label = 'Time of Onset Before \n Ground Contact = 0.055 s', size = 13.25, aes( x = 0.117, y = 660 ), fontface = 'bold', family = 'Arial Black'  )+
+    
+    
+      
+            
+    scale_y_continuous( breaks = seq( 0, 650, by = 50 ), limits = c( 0, 670 ) )+
+          
+     scale_x_continuous( breaks = seq( 0, 0.15, by = 0.01 ), limits = c( 0, 0.15 ) )+    
+
+
+    
+    labs( title = 'Rectified EMG for Finding Pre-Activation Onset \n Flight Phase Only', x = 'Time (s)', y = 'Activation (mV)' ) +
+    
+   
+    guides( fill = 'none', shape = 'none', linetype = 'none', color = 'none' )+
+      
+      
+
+          
+                scale_color_manual(values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ), aesthetics = c( 'color' ) ) +
+   
+   
+          
+scale_fill_manual( values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ),
+      name = 'Muscle ID', aesthetics=c('fill')  ) +
+    
+
+   
+   
+    theme(plot.title = element_text(size = 46,hjust = 0.5,face = 'bold', family = 'Arial Bold' ),
+      plot.background  =  element_rect(fill=rgb(245, 245, 220, maxColorValue = 255)),
+                axis.title.x = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.title.y.left = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+          axis.title.y.right = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+      axis.text.y.right=element_text(size=35,color='darkred',face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.text.x  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,5),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',linewidth=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255) ),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey',linewidth = 0.1),
+      strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+
+
+ggsave(  path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Methods Illustrations', 'RectifiedEMGforSantelloMcDonaghMethodsIllustration_FlightOnly2.png', width = 6750, height = 6750, units = 'px' )
+
+
+
+```
+
+
+
+
+
+
+
+```{r ATx07 - Entire Hop }
+
+( TimeOfOnsetB4GContact <- ATx07_EntireHop$TimeVector_s[ length( ATx07_EntireHop$TimeVector_s ) ] - ATx07_EntireHop$Time_MaxDiffFromReferenceLine_s[ 1 ] )
+
+
+(ATx07FlightEMGPlot <- ggplot( data= ATx07_EntireHop, aes( x = TimeVector_s, y = RectifiedEMG) ) +
+    
+      
+    #Plot a vertical line for pre-activation onset
+    geom_vline( xintercept = ATx07_FlightOnly$Time_MaxDiffFromReferenceLine_s[ 1 ], color = '#e66101', linewidth = 3, linetype = 'dashed' ) +
+    
+    #Plot a vertical line for ground contact phase onset
+    geom_vline( xintercept = ATx07_EntireHop$BeginGContact_Frame[ 1 ], color = '#e66101', linewidth = 3, linetype = 'dashed' ) +
+  
+      
+      
+      #Horizontal arrow pointing between flight phase onset and ground contact onset
+    geom_segment( aes(x = 0,
+                            y = 945,
+                            xend = ATx07_FlightOnly$TimeVector_s[ length( ATx07_FlightOnly$TimeVector_s ) ] - 0.003,
+                            yend = 945), color='black',
+                     na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow = arrow( length = unit( 0.25,'inches'), ends = 'both' ), show.legend=FALSE) + 
+                      
+      
+      
+  #Label the flight phase
+  geom_text( label = 'Flight Phase', size = 13.25, aes( x = 0.045, y = 975 ), fontface = 'bold', family = 'Arial Bold'  )+
+    
+      
+    #Plot the integrated EMG line
+    geom_line( color = '#5e3c99', linewidth = 3 ) +
+
+      
+      #Horizontal arrow to direct geom_text to vertical line separating flight and ground contact phases
+    geom_segment( aes(x = ATx07_EntireHop$BeginGContact_Frame[ 1 ] - 0.003,
+                            y = 1075,
+                            xend = ATx07_FlightOnly$Time_MaxDiffFromReferenceLine_s[ 1 ] + 0.003,
+                            yend = 1075), color='black',
+                     na.rm=FALSE,inherit.aes=FALSE,linewidth=3,arrow = arrow( length = unit( 0.25,'inches'), ends = 'both' ), show.legend=FALSE) + 
+  
+  #Label with value of pre-activation onset.
+  geom_text( label = 'Time of Onset Before Ground Contact = 0.055 s', size = 13.25, aes( x = 0.3, y = 1075 ), fontface = 'bold', family = 'Arial Bold'  )+
+    
+    
+      
+            
+    scale_y_continuous( breaks = seq( 0, 1100, by = 100 ), limits = c( 0, 1100 ) )+
+          
+     scale_x_continuous( breaks = seq( 0, 0.45, by = 0.05 ), limits = c( 0, 0.45 ) )+    
+
+
+    
+    labs( title = 'Rectified EMG for Finding Pre-Activation Onset \n Entire Hop', x = 'Time (s)', y = 'Activation (mV)' ) +
+    
+   
+    guides( fill = 'none', shape = 'none', linetype = 'none', color = 'none' )+
+      
+      
+
+          
+                scale_color_manual(values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ), aesthetics = c( 'color' ) ) +
+   
+   
+          
+scale_fill_manual( values = c( 'MGas' = met.brewer('Ingres')[1], 'LGas' = met.brewer('Ingres')[3], 'Sol' = met.brewer('Ingres')[4], 'PL' = met.brewer('Ingres')[6], 'TA' = met.brewer('Ingres')[7] ),
+      name = 'Muscle ID', aesthetics=c('fill')  ) +
+    
+
+   
+   
+    theme(plot.title = element_text(size = 46,hjust = 0.5,face = 'bold', family = 'Arial Bold' ),
+      plot.background  =  element_rect(fill=rgb(245, 245, 220, maxColorValue = 255)),
+                axis.title.x = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.title.y.left = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic'),
+          axis.title.y.right = element_text(size = 43,face = 'bold.italic', family = 'Arial Bold Italic',vjust=0.9,color='darkred'),
+                axis.text.y.left  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+      axis.text.y.right=element_text(size=35,color='darkred',face = 'bold.italic', family = 'Arial Bold Italic'),
+                axis.text.x  =  element_text(size = 35,face = 'bold.italic', family = 'Arial Bold Italic'),
+                legend.position = 'top', 
+      legend.text = element_text(size = 24.47,lineheight=100),
+                legend.title = element_text(size = 25.47),
+      plot.margin = margin(5,12,0,5),
+      legend.key  =  element_rect(color=rgb(245, 245, 220, maxColorValue = 255)),
+      legend.key.height=unit(0,'lines'),legend.key.width=unit(0.5,'lines'),
+      legend.box.background=element_rect(color='black',linewidth=1),
+      panel.background=element_rect(color='black',fill=rgb(245, 245, 220, maxColorValue = 255) ),
+      panel.grid.major.y=element_line(color='darkgrey'),
+      panel.grid.minor.y=element_line(color='darkgrey',linewidth = 0.1),
+      strip.text=element_text(size=22.5)  ) 
+    
+    )
+
+
+
+ggsave(  path = '/Users/dortiz23/Documents/R Scripts/Dissertation/Post-Quals/Figures/Methods Illustrations', 'RectifiedEMGforSantelloMcDonaghMethodsIllustration_EntireHop.png', width = 6750, height = 6750, units = 'px' )
+
+
+
+```
+
+
